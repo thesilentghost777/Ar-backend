@@ -1,0 +1,2255 @@
+# Documentation API - Auto École Ange Raphael
+
+## Base URL
+```
+https://votre-domaine.com/api
+```
+
+## Authentication
+L'API utilise Laravel Sanctum pour l'authentification. Après connexion, incluez le token dans le header :
+```
+Authorization: Bearer {token}
+```
+
+---
+
+## 📋 Table des matières
+1. [Authentication](#authentication-endpoints)
+2. [Profil Utilisateur](#profil-utilisateur)
+3. [Dashboard](#dashboard)
+4. [Paiements & Dépôts](#paiements--dépôts)
+5. [Transferts](#transferts)
+6. [Frais de Formation](#frais-de-formation)
+7. [Cours](#cours)
+8. [Quiz](#quiz)
+9. [Parrainage](#parrainage)
+10. [Sessions & Configuration](#sessions--configuration)
+
+---
+
+## Authentication Endpoints
+
+### 1. Test API
+**GET** `/test`
+
+**Headers:** Aucun
+
+**Réponse:**
+```json
+{
+  "status": "success",
+  "message": "API fonctionne correctement 🚀",
+  "timestamp": "2025-12-15T10:30:00.000000Z"
+}
+```
+
+---
+
+### 2. Inscription
+**POST** `/inscription`
+
+**Headers:**
+```
+Content-Type: application/json
+```
+
+**Body:**
+```json
+{
+  "nom": "Dupont",
+  "prenom": "Jean",
+  "telephone": "690123456",
+  "password": "motdepasse123",
+  "password_confirmation": "motdepasse123",
+  "date_naissance": "1995-05-15",
+  "quartier": "Yaoundé",
+  "type_permis": "permis_b",
+  "type_cours": "en_ligne",
+  "vague": "1",
+  "session_id": 1,
+  "centre_examen_id": 1,
+  "code_parrainage": "ABC12345",
+  "lieux_pratique": [1, 2]
+}
+```
+
+**Champs obligatoires:**
+- `nom` (string, max 255)
+- `prenom` (string, max 255)
+- `telephone` (string, unique)
+- `password` (string, min 6)
+- `password_confirmation` (string, doit correspondre à password)
+- `type_permis` (enum: `permis_a`, `permis_b`, `permis_t`)
+- `type_cours` (enum: `en_ligne`, `presentiel`, `les_deux`)
+- `vague` (enum: `1`, `2`)
+
+**Champs optionnels:**
+- `date_naissance` (date: YYYY-MM-DD)
+- `quartier` (string)
+- `session_id` (integer)
+- `centre_examen_id` (integer)
+- `code_parrainage` (string)
+- `lieux_pratique` (array of integers)
+
+**Réponse Success (201):**
+```json
+{
+  "success": true,
+  "message": "Inscription réussie",
+  "user": {
+    "id": 1,
+    "nom": "Dupont",
+    "prenom": "Jean",
+    "telephone": "690123456",
+    "date_naissance": "1995-05-15",
+    "quartier": "Yaoundé",
+    "type_permis": "permis_b",
+    "type_cours": "en_ligne",
+    "vague": "1",
+    "session_id": 1,
+    "centre_examen_id": 1,
+    "code_parrainage": "XYZ78945",
+    "parrain_id": 5,
+    "niveau_parrainage": -1,
+    "solde": 0,
+    "validated": false,
+    "cours_debloques": false,
+    "status_frais_formation": "non_paye",
+    "status_frais_inscription": "non_paye",
+    "status_examen_blanc": "non_paye",
+    "status_frais_examen": "non_paye",
+    "premier_depot_at": null,
+    "created_at": "2025-12-15T10:30:00.000000Z",
+    "session": {
+      "id": 1,
+      "nom": "Session Janvier 2025",
+      "date_examen_theorique": "2025-03-15",
+      "date_examen_pratique": "2025-03-20"
+    },
+    "centreExamen": {
+      "id": 1,
+      "nom": "Centre Yaoundé",
+      "adresse": "Rue 123"
+    },
+    "parrain": {
+      "id": 5,
+      "nom": "Martin",
+      "prenom": "Paul"
+    },
+    "lieuxPratique": [
+      {
+        "id": 1,
+        "nom": "Lieu A",
+        "adresse": "Adresse A"
+      }
+    ]
+  },
+  "code_parrainage": "XYZ78945"
+}
+```
+
+**Réponse Error (422):**
+```json
+{
+  "success": false,
+  "message": "Erreur lors de l'inscription: Le téléphone existe déjà",
+  "errors": {
+    "telephone": ["Le téléphone est déjà utilisé"]
+  }
+}
+```
+
+---
+
+### 3. Connexion
+**POST** `/connexion`
+
+**Body:**
+```json
+{
+  "telephone": "690123456",
+  "password": "motdepasse123"
+}
+```
+
+**Réponse Success (200):**
+```json
+{
+  "success": true,
+  "message": "Connexion réussie",
+  "user": {
+    "id": 1,
+    "nom": "Dupont",
+    "prenom": "Jean",
+    "telephone": "690123456",
+    "solde": 50000,
+    "niveau_parrainage": 1,
+    "cours_debloques": true,
+    "code_parrainage": "XYZ78945",
+    "session": {...},
+    "centreExamen": {...},
+    "parrain": {...}
+  },
+  "token": "1|abc123def456..."
+}
+```
+
+**Réponse Error (401):**
+```json
+{
+  "success": false,
+  "message": "Identifiants incorrects"
+}
+```
+
+---
+
+### 4. Déconnexion
+**POST** `/deconnexion`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Réponse (200):**
+```json
+{
+  "success": true,
+  "message": "Déconnexion réussie"
+}
+```
+
+---
+
+## Profil Utilisateur
+
+### 5. Obtenir le profil
+**GET** `/profil`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Réponse (200):**
+```json
+{
+  "success": true,
+  "user": {
+    "id": 1,
+    "nom": "Dupont",
+    "prenom": "Jean",
+    "telephone": "690123456",
+    "date_naissance": "1995-05-15",
+    "quartier": "Yaoundé",
+    "type_permis": "permis_b",
+    "type_cours": "en_ligne",
+    "vague": "1",
+    "solde": 50000,
+    "niveau_parrainage": 1,
+    "code_parrainage": "XYZ78945",
+    "cours_debloques": true,
+    "status_frais_formation": "paye",
+    "status_frais_inscription": "paye",
+    "status_examen_blanc": "non_paye",
+    "status_frais_examen": "non_paye",
+    "premier_depot_at": "2025-12-01T10:00:00.000000Z",
+    "session": {...},
+    "centreExamen": {...},
+    "parrain": {...},
+    "filleuls": [...],
+    "lieuxPratique": [...]
+  }
+}
+```
+
+---
+
+### 6. Mettre à jour le profil
+**PUT** `/profil/update`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Body (tous les champs optionnels):**
+```json
+{
+  "nom": "Nouveau Nom",
+  "prenom": "Nouveau Prénom",
+  "telephone": "691234567",
+  "quartier": "Douala",
+  "type_cours": "les_deux",
+  "password": "nouveauMotDePasse",
+  "lieux_pratique": [2, 3]
+}
+```
+
+**Réponse (200):**
+```json
+{
+  "success": true,
+  "message": "Profil mis à jour",
+  "user": {...}
+}
+```
+
+---
+
+## Dashboard
+
+### 7. Obtenir le dashboard
+**GET** `/dashboard`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Réponse (200):**
+```json
+{
+  "success": true,
+  "utilisateur": {
+    "id": 1,
+    "nom": "Dupont",
+    "prenom": "Jean",
+    "initiales": "JD",
+    "solde": 50000,
+    "type_permis": "permis_b",
+    "vague": "1",
+    "niveau_parrainage": 1,
+    "cours_debloques": true
+  },
+  "compte_a_rebours": {
+    "date_examen": "15/03/2025",
+    "passe": false,
+    "jours": 90,
+    "heures": 15,
+    "minutes": 30,
+    "secondes": 45,
+    "timestamp_cible": 1710504000
+  },
+  "session": {
+    "id": 1,
+    "nom": "Session Janvier 2025",
+    "vague": "1",
+    "dates": {
+      "date_communication_enregistrement": "2025-01-05",
+      "date_enregistrement_vague1": "2025-01-10",
+      "date_examen_theorique": "2025-03-15",
+      "date_examen_pratique": "2025-03-20"
+    }
+  },
+  "frais": {
+    "formation": {
+      "montant": 40000,
+      "status": "paye",
+      "description": "Payé le 01/12/2025 à 10:30",
+      "label": "Frais de formation"
+    },
+    "inscription": {
+      "montant": 10000,
+      "status": "paye",
+      "description": "Payé le 02/12/2025 à 14:20",
+      "label": "Frais d'inscription"
+    },
+    "examen_blanc": {
+      "montant": 12500,
+      "status": "non_paye",
+      "description": null,
+      "label": "Frais d'examen blanc"
+    },
+    "examen": {
+      "montant": 30000,
+      "status": "non_paye",
+      "description": null,
+      "label": "Frais d'examen"
+    }
+  },
+  "pret_pour_examen": false,
+  "progression": {
+    "theorique": {
+      "lecons": {
+        "total": 50,
+        "completes": 35,
+        "pourcentage": 70.0
+      },
+      "quiz": {
+        "total": 10,
+        "reussis": 7,
+        "pourcentage": 70.0
+      },
+      "global": {
+        "pourcentage": 70.0,
+        "termine": false
+      }
+    },
+    "pratique": {
+      "lecons": {
+        "total": 30,
+        "completes": 15,
+        "pourcentage": 50.0
+      },
+      "quiz": {
+        "total": 5,
+        "reussis": 2,
+        "pourcentage": 40.0
+      },
+      "global": {
+        "pourcentage": 47.2,
+        "termine": false
+      }
+    }
+  },
+  "parcours_formation": [
+    {
+      "etape": 1,
+      "titre": "S'inscrire",
+      "description": "Créer votre compte Ange Raphael",
+      "complete": true,
+      "date": "01/12/2025"
+    },
+    {
+      "etape": 2,
+      "titre": "Effectuer les paiements",
+      "description": "Régler les différents frais de formation",
+      "complete": false,
+      "sous_etapes": [
+        {
+          "titre": "Frais de formation",
+          "complete": true,
+          "montant": 40000
+        },
+        {
+          "titre": "Frais d'inscription",
+          "complete": true,
+          "montant": 10000
+        },
+        {
+          "titre": "Frais examen blanc",
+          "complete": false,
+          "montant": 12500
+        },
+        {
+          "titre": "Frais d'examen",
+          "complete": false,
+          "montant": 30000
+        }
+      ]
+    },
+    {
+      "etape": 3,
+      "titre": "Suivre les cours",
+      "description": "Compléter les cours théoriques et pratiques",
+      "complete": false,
+      "sous_etapes": [
+        {
+          "titre": "Cours théoriques",
+          "complete": false,
+          "pourcentage": 70.0
+        },
+        {
+          "titre": "Cours pratiques",
+          "complete": false,
+          "pourcentage": 47.2
+        }
+      ]
+    },
+    {
+      "etape": 4,
+      "titre": "Présenter l'examen",
+      "description": "Passer l'examen officiel du permis",
+      "complete": false,
+      "date_prevue": "15/03/2025"
+    }
+  ]
+}
+```
+
+---
+
+## Paiements & Dépôts
+
+### 8. Dépôt via Mobile Money
+**POST** `/depot/mobile`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Body:**
+```json
+{
+  "montant": 50000,
+  "numero_payeur": "690123456"
+}
+```
+
+**Validation:**
+- `montant` minimum: 10000 FCFA
+- `numero_payeur` requis
+
+**Réponse Success (200):**
+```json
+{
+  "success": true,
+  "message": "Dépôt effectué avec succès",
+  "paiement": {
+    "id": 15,
+    "user_id": 1,
+    "type": "depot",
+    "methode": "mobile_money",
+    "montant": 50000,
+    "solde_avant": 25000,
+    "solde_apres": 75000,
+    "reference": "DEP-20251215-ABC123",
+    "description": "Dépôt via Mobile Money - 690123456",
+    "status": "valide",
+    "created_at": "2025-12-15T10:30:00.000000Z"
+  },
+  "nouveau_solde": 75000,
+  "cours_debloques": true
+}
+```
+
+**Réponse Error (422):**
+```json
+{
+  "success": false,
+  "message": "Le dépôt minimum est de 10000 FCFA"
+}
+```
+
+---
+
+### 9. Dépôt via Code Caisse
+**POST** `/depot/code-caisse`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Body:**
+```json
+{
+  "code": "CAISSE123ABC"
+}
+```
+
+**Réponse Success (200):**
+```json
+{
+  "success": true,
+  "message": "Dépôt effectué avec succès",
+  "paiement": {
+    "id": 16,
+    "type": "depot",
+    "methode": "code_caisse",
+    "montant": 30000,
+    "solde_avant": 75000,
+    "solde_apres": 105000,
+    "reference": "DEP-20251215-XYZ789",
+    "description": "Dépôt via Code Caisse - CAISSE123ABC",
+    "status": "valide"
+  },
+  "nouveau_solde": 105000,
+  "cours_debloques": true
+}
+```
+
+**Réponse Error (422):**
+```json
+{
+  "success": false,
+  "message": "Code caisse invalide"
+}
+```
+
+ou
+
+```json
+{
+  "success": false,
+  "message": "Ce code a déjà été utilisé ou a expiré"
+}
+```
+
+---
+
+### 10. Historique des paiements
+**GET** `/historique?limit=20`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Query Params:**
+- `limit` (optionnel, default: 20)
+
+**Réponse (200):**
+```json
+{
+  "success": true,
+  "paiements": [
+    {
+      "id": 20,
+      "type": "paiement_frais",
+      "methode": "systeme",
+      "montant": 40000,
+      "solde_avant": 105000,
+      "solde_apres": 65000,
+      "reference": "PAY-20251215-ABC456",
+      "description": "Frais de formation",
+      "status": "valide",
+      "frais_type": "formation",
+      "created_at": "2025-12-15T11:00:00.000000Z"
+    },
+    {
+      "id": 19,
+      "type": "depot",
+      "methode": "mobile_money",
+      "montant": 50000,
+      "solde_avant": 55000,
+      "solde_apres": 105000,
+      "reference": "DEP-20251215-XYZ123",
+      "description": "Dépôt via Mobile Money",
+      "status": "valide",
+      "created_at": "2025-12-15T10:30:00.000000Z"
+    }
+  ],
+  "solde_actuel": 65000
+}
+```
+
+---
+
+## Transferts
+
+### 11. Rechercher un destinataire
+**GET** `/transfert/rechercher?telephone=690123456`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Query Params:**
+- `telephone` (requis)
+
+**Réponse Success (200):**
+```json
+{
+  "success": true,
+  "destinataire": {
+    "id": 5,
+    "nom": "Martin",
+    "prenom": "Paul",
+    "telephone": "690123456"
+  }
+}
+```
+
+**Réponse Error (404):**
+```json
+{
+  "success": false,
+  "message": "Utilisateur non trouvé"
+}
+```
+
+---
+
+### 12. Effectuer un transfert
+**POST** `/transfert`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Body:**
+```json
+{
+  "telephone_destinataire": "690123456",
+  "montant": 15000
+}
+```
+
+**Réponse Success (200):**
+```json
+{
+  "success": true,
+  "message": "Transfert effectué avec succès",
+  "nouveau_solde": 50000,
+  "destinataire": {
+    "nom": "Martin",
+    "prenom": "Paul"
+  }
+}
+```
+
+**Réponse Error (422):**
+```json
+{
+  "success": false,
+  "message": "Solde insuffisant"
+}
+```
+
+ou
+
+```json
+{
+  "success": false,
+  "message": "Destinataire non trouvé"
+}
+```
+
+ou
+
+```json
+{
+  "success": false,
+  "message": "Vous ne pouvez pas vous transférer à vous-même"
+}
+```
+
+---
+
+## Frais de Formation
+
+### 13. Obtenir le statut des frais
+**GET** `/frais/status`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Réponse (200):**
+```json
+{
+  "success": true,
+  "frais": {
+    "formation": {
+      "montant": 40000,
+      "status": "paye",
+      "description": "Payé le 15/12/2025 à 10:30",
+      "label": "Frais de formation"
+    },
+    "inscription": {
+      "montant": 10000,
+      "status": "dispense",
+      "description": "Dispensé - Niveau 1 atteint (3 filleuls avec dépôt)",
+      "label": "Frais d'inscription"
+    },
+    "examen_blanc": {
+      "montant": 12500,
+      "status": "non_paye",
+      "description": null,
+      "label": "Frais d'examen blanc"
+    },
+    "examen": {
+      "montant": 30000,
+      "status": "non_paye",
+      "description": null,
+      "label": "Frais d'examen"
+    }
+  },
+  "solde": 65000
+}
+```
+
+---
+
+### 14. Payer des frais
+**POST** `/frais/payer`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Body:**
+```json
+{
+  "type_frais": "formation"
+}
+```
+
+**Types de frais disponibles:**
+- `formation`
+- `inscription`
+- `examen_blanc`
+- `examen`
+
+**Réponse Success (200):**
+```json
+{
+  "success": true,
+  "message": "Paiement effectué avec succès",
+  "nouveau_solde": 25000,
+  "frais_payes": "Frais de formation"
+}
+```
+
+**Réponse Error (422):**
+```json
+{
+  "success": false,
+  "message": "Solde insuffisant. Il vous manque 15000 FCFA"
+}
+```
+
+ou
+
+```json
+{
+  "success": false,
+  "message": "Ces frais sont déjà payés ou dispensés"
+}
+```
+
+---
+
+## Cours
+
+### 15. Obtenir les cours théoriques
+**GET** `/cours/theorique`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Réponse Success (200):**
+```json
+{
+  "success": true,
+  "cours_debloques": true,
+  "modules": [
+    {
+      "id": 1,
+      "nom": "Code de la route",
+      "description": "Apprentissage des règles du code",
+      "type": "theorique",
+      "complete": false,
+      "accessible": true,
+      "chapitres": [
+        {
+          "id": 1,
+          "nom": "Les panneaux de signalisation",
+          "description": "Apprendre les panneaux",
+          "complete": false,
+          "accessible": true,
+          "lecons": [
+            {
+              "id": 1,
+              "titre": "Panneaux d'interdiction",
+              "contenu_texte": "Les panneaux d'interdiction...",
+              "url_web": "https://cours.autoecole.com/panneaux",
+              "url_video": null,
+              "duree_minutes": 30,
+              "completee": true,
+              "date_completion": "2025-12-10T10:00:00.000000Z",
+              "accessible": true
+            },
+            {
+              "id": 2,
+              "titre": "Panneaux d'obligation",
+              "contenu_texte": "Les panneaux d'obligation...",
+              "url_web": "https://cours.autoecole.com/obligation",
+              "url_video": null,
+              "duree_minutes": 25,
+              "completee": false,
+              "date_completion": null,
+              "accessible": true
+            }
+          ],
+          "quiz": {
+            "id": 1,
+            "titre": "Quiz panneaux de signalisation",
+            "note_passage": 12,
+            "duree_minutes": 30,
+            "disponible": false,
+            "reussi": false,
+            "meilleure_note": null
+          }
+        }
+      ]
+    }
+  ],
+  "progression": {
+    "lecons": {
+      "total": 50,
+      "completes": 35,
+      "pourcentage": 70.0
+    },
+    "quiz": {
+      "total": 10,
+      "reussis": 7,
+      "pourcentage": 70.0
+    },
+    "global": {
+      "pourcentage": 70.0,
+      "termine": false
+    }
+  }
+}
+```
+
+**Réponse Error (403):**
+```json
+{
+  "success": false,
+  "message": "Effectuez un premier dépôt pour débloquer les cours",
+  "cours_debloques": false
+}
+```
+
+---
+
+### 16. Obtenir les cours pratiques
+**GET** `/cours/pratique`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Réponse Success (200):**
+```json
+{
+  "success": true,
+  "cours_debloques": true,
+  "modules": [
+    {
+      "id": 5,
+      "nom": "Conduite en ville",
+      "description": "Techniques de conduite urbaine",
+      "type": "pratique",
+      "complete": false,
+      "accessible": true,
+      "chapitres": [
+        {
+          "id": 10,
+          "nom": "Démarrage et arrêt",
+          "description": "Maîtriser le démarrage",
+          "complete": false,
+          "accessible": true,
+          "lecons": [
+            {
+              "id": 50,
+              "titre": "Démarrer sur plat",
+              "contenu_texte": "Pour démarrer...",
+              "url_web": null,
+              "url_video": "https://videos.autoecole.com/demarrage.mp4",
+              "duree_minutes": 15,
+              "completee": false,
+              "date_completion": null,
+              "accessible": true
+            }
+          ],
+          "quiz": {
+            "id": 10,
+            "titre": "Quiz démarrage et arrêt",
+            "note_passage": 12,
+            "duree_minutes": 20,
+            "disponible": false,
+            "reussi": false,
+            "meilleure_note": null
+          }
+        }
+      ]
+    }
+  ],
+  "progression": {
+    "lecons": {
+      "total": 30,
+      "completes": 12,
+      "pourcentage": 40.0
+    },
+    "quiz": {
+      "total": 5,
+      "reussis": 2,
+      "pourcentage": 40.0
+    },
+    "global": {
+      "pourcentage": 40.0,
+      "termine": false
+    }
+  }
+}
+```
+
+---
+
+### 17. Obtenir une leçon
+**GET** `/cours/lecon/{id}`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Réponse Success (200):**
+```json
+{
+  "success": true,
+  "lecon": {
+    "id": 1,
+    "titre": "Panneaux d'interdiction",
+    "contenu_texte": "Les panneaux d'interdiction sont...",
+    "url_web": "https://cours.autoecole.com/panneaux",
+    "url_video": null,
+    "duree_minutes": 30,
+    "completee": false,
+    "chapitre": {
+      "id": 1,
+      "nom": "Les panneaux de signalisation"
+    },
+    "module": {
+      "id": 1,
+      "nom": "Code de la route",
+      "type": "theorique"
+    }
+  }
+}
+```
+
+**Réponse Error (403):**
+```json
+{
+  "success": false,
+  "message": "Terminez les leçons précédentes pour accéder à celle-ci"
+}
+```
+
+---
+
+### 18. Marquer une leçon comme terminée
+**POST** `/cours/lecon/{id}/terminer`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Body:** Aucun
+
+**Réponse Success (200):**
+```json
+{
+  "success": true,
+  "message": "Leçon marquée comme terminée",
+  "progression": {
+    "id": 25,
+    "user_id": 1,
+    "lecon_id": 1,
+    "completee": true,
+    "date_completion": "2025-12-15T10:30:00.000000Z"
+  },
+  "quiz_disponible": true,
+  "progression_globale": {
+    "lecons": {
+      "total": 50,
+      "completes": 36,
+      "pourcentage": 72.0
+    },
+    "quiz": {
+      "total": 10,
+      "reussis": 7,
+      "pourcentage": 70.0
+    },
+    "global": {
+      "pourcentage": 71.7,
+      "termine": false
+    }
+  }
+}
+```
+
+---
+
+### 19. Obtenir la progression globale
+**GET** `/cours/progression`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Réponse (200):**
+```json
+{
+  "success": true,
+  "theorique": {
+    "lecons": {
+      "total": 50,
+      "completes": 35,
+      "pourcentage": 70.0
+    },
+    "quiz": {
+      "total": 10,
+      "reussis": 7,
+      "pourcentage": 70.0
+    },
+    "global": {
+      "pourcentage": 70.0,
+      "termine": false
+    }
+  },
+  "pratique": {
+    "lecons": {
+      "total": 30,
+      "completes": 15,
+      "pourcentage": 50.0
+    },
+    "quiz": {
+      "total": 5,
+      "reussis": 2,
+      "pourcentage": 40.0
+    },
+    "global": {
+      "pourcentage": 47.2,
+      "termine": false
+    }
+  },
+  "pret_pour_examen": {
+    "success": true,
+    "pret_pour_examen": false,
+    "details": {
+      "frais_payes": false,
+      "cours_theorique_termine": false,
+      "cours_pratique_termine": false,
+      "progression_theorique": 70.0,
+      "progression_pratique": 47.2
+    }
+  }
+}
+```
+
+---
+
+## Quiz
+
+### 20. Obtenir un quiz
+**GET** `/cours/chapitre/{id}/quiz`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Réponse Success (200):**
+```json
+{
+  "success": true,
+  "quiz": {
+    "id": 1,
+    "titre": "Quiz panneaux de signalisation",
+    "description": "Testez vos connaissances sur les panneaux",
+    "note_passage": 12,
+    "duree_minutes": 30,
+    "deja_reussi": false,
+    "meilleure_note": null,
+    "questions": [
+      {
+        "id": 1,
+        "enonce": "Que signifie ce panneau ?",
+        "image_url": "https://cdn.autoecole.com/panneau1.jpg",
+        "type": "qcm",
+        "points": 2,
+        "reponses": [
+          {
+            "id": 1,
+            "texte": "Interdiction de tourner à gauche"
+          },
+          {
+            "id": 2,
+            "texte": "Interdiction de tourner à droite"
+          },
+          {
+            "id": 3,
+            "texte": "Interdiction de demi-tour"
+          },
+          {
+            "id": 4,
+            "texte": "Sens interdit"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "enonce": "Le port de la ceinture est obligatoire",
+        "image_url": null,
+        "type": "vrai_faux",
+        "points": 1,
+        "reponses": [
+          {
+            "id": 5,
+            "texte": "Vrai"
+          },
+          {
+            "id": 6,
+            "texte": "Faux"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+**Réponse Error (403):**
+```json
+{
+  "success": false,
+  "message": "Terminez toutes les leçons du chapitre avant de passer le quiz"
+}
+```
+
+---
+
+### 21. Soumettre un quiz
+**POST** `/cours/chapitre/{id}/quiz`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Body:**
+```json
+{
+  "reponses": {
+    "1": 3,
+    "2": 5,
+    "3": 10,
+    "4": 15
+  }
+}
+```
+
+Le format est `"question_id": reponse_id`
+
+**Réponse Success (200):**
+```json
+{
+  "success": true,
+  "resultat": {
+    "note": 16.5,
+    "note_passage": 12,
+    "reussi": true,
+    "total_questions": 10,
+    "bonnes_reponses": 8,
+    "tentative": 2
+  },
+  "corrections": [
+    {
+      "question_id": 1,
+      "enonce": "Que signifie ce panneau ?",
+      "reponse_utilisateur": 3,
+      "bonne_reponse": 3,
+      "bonne_reponse_texte": "Interdiction de demi-tour",
+      "est_correct": true,
+      "explication": "Ce panneau indique l'interdiction de faire demi-tour",
+      "points": 2
+    },
+    {
+      "question_id": 2,
+      "enonce": "Le port de la ceinture est obligatoire",
+      "reponse_utilisateur": 5,
+      "bonne_reponse": 5,
+      "bonne_reponse_texte": "Vrai",
+      "est_correct": true,
+      "explication": "Le port de la ceinture est obligatoire pour tous les passagers",
+      "points": 1
+    }
+  ],
+  "progression_globale": {
+    "lecons": {
+      "total": 50,
+      "completes": 40,
+      "pourcentage": 80.0
+    },
+    "quiz": {
+      "total": 10,
+      "reussis": 8,
+      "pourcentage": 80.0
+    },
+    "global": {
+      "pourcentage": 80.0,
+      "termine": false
+    }
+  }
+}
+```
+
+---
+
+## Parrainage
+
+### 22. Informations de parrainage
+**GET** `/parrainage`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Réponse (200):**
+```json
+{
+  "success": true,
+  "niveau_actuel": 1,
+  "code_parrainage": "XYZ78945",
+  "filleuls": [
+    {
+      "id": 10,
+      "nom": "Dubois",
+      "prenom": "Marie",
+      "niveau": 0,
+      "a_fait_depot": true,
+      "date_inscription": "2025-12-01T10:00:00.000000Z"
+    },
+    {
+      "id": 11,
+      "nom": "Bernard",
+      "prenom": "Luc",
+      "niveau": -1,
+      "a_fait_depot": false,
+      "date_inscription": "2025-12-05T14:30:00.000000Z"
+    }
+  ],
+  "nombre_filleuls": 2,
+  "avantages_niveau_suivant": {
+    "niveau_cible": 2,
+    "condition": "Vos 3 filleuls atteignent le niveau 1",
+    "avantage": "Frais d'examen blanc (12500 FCFA) dispensés"
+  },
+  "explication_systeme": {
+    "intro": "Le système de parrainage Ange Raphael vous permet d'obtenir votre permis gratuitement!",
+    "niveaux": [
+      {
+        "niveau": 0,
+        "condition": "3 filleuls inscrits",
+        "avantage": "Frais de formation dispensés (40000 FCFA)"
+      },
+      {
+        "niveau": 1,
+        "condition": "3 filleuls ayant fait un dépôt",
+        "avantage": "Frais d'inscription dispensés (10000 FCFA)"
+      },
+      {
+        "niveau": 2,
+        "condition": "3 filleuls au niveau 1",
+        "avantage": "Frais d'examen blanc dispensés (12500 FCFA)"
+      },
+      {
+        "niveau": 3,
+        "condition": "3 filleuls au niveau 2",
+        "avantage": "Frais d'examen dispensés (30000 FCFA) - Formation 100% gratuite!"
+      }
+    ],
+    "important": [
+      "Chaque membre peut avoir maximum 3 filleuls directs",
+      "Les filleuls supplémentaires sont placés sous vos filleuls (arbre)",
+      "Les niveaux de vos filleuls impactent votre propre niveau"
+    ]
+  }
+}
+```
+
+---
+
+### 23. Liste des filleuls
+**GET** `/parrainage/filleuls`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Réponse (200):**
+```json
+{
+  "success": true,
+  "filleuls": [
+    {
+      "id": 10,
+      "nom": "Dubois",
+      "prenom": "Marie",
+      "telephone": "6901****56",
+      "niveau": 0,
+      "niveau_label": "Niveau 0",
+      "a_fait_depot": true,
+      "date_depot": "2025-12-02T10:00:00.000000Z",
+      "date_inscription": "2025-12-01T10:00:00.000000Z",
+      "nombre_filleuls": 1
+    },
+    {
+      "id": 11,
+      "nom": "Bernard",
+      "prenom": "Luc",
+      "telephone": "6912****78",
+      "niveau": -1,
+      "niveau_label": "Nouveau membre",
+      "a_fait_depot": false,
+      "date_depot": null,
+      "date_inscription": "2025-12-05T14:30:00.000000Z",
+      "nombre_filleuls": 0
+    }
+  ],
+  "total": 2
+}
+```
+
+---
+
+### 24. Message de partage
+**GET** `/parrainage/message`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Réponse (200):**
+```json
+{
+  "success": true,
+  "message": "😊 Inscris-toi à l'Auto-École Ange Raphael avec mon code de parrainage : XYZ78945 🚗\n\n🚘 Apprends à conduire et obtiens ton permis A & B GRATUITEMENT 🥳\n\n📲Cliquez sur le lien pour télécharger l'application et vous inscrire 👉 https://app.autoecole-angeraphael.com/download",
+  "code_parrainage": "XYZ78945",
+  "lien_app": "https://app.autoecole-angeraphael.com/download"
+}
+```
+
+---
+
+### 25. Arbre de parrainage
+**GET** `/parrainage/arbre?profondeur=3`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Query Params:**
+- `profondeur` (optionnel, default: 3, max recommandé: 5)
+
+**Réponse (200):**
+```json
+{
+  "success": true,
+  "arbre": {
+    "id": 1,
+    "nom": "Dupont",
+    "prenom": "Jean",
+    "niveau": 1,
+    "enfants": [
+      {
+        "id": 10,
+        "nom": "Dubois",
+        "prenom": "Marie",
+        "niveau": 0,
+        "enfants": [
+          {
+            "id": 20,
+            "nom": "Petit",
+            "prenom": "Sophie",
+            "niveau": -1,
+            "enfants": []
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "nom": "Bernard",
+        "prenom": "Luc",
+        "niveau": -1,
+        "enfants": []
+      },
+      {
+        "id": 12,
+        "nom": "Moreau",
+        "prenom": "Pierre",
+        "niveau": 0,
+        "enfants": []
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Sessions & Configuration
+
+### 26. Liste des sessions
+**GET** `/sessions`
+
+**Headers:** Aucun (endpoint public)
+
+**Réponse (200):**
+```json
+{
+  "success": true,
+  "sessions": [
+    {
+      "id": 1,
+      "nom": "Session Janvier 2025",
+      "date_communication_enregistrement": "2025-01-05",
+      "date_enregistrement_vague1": "2025-01-10",
+      "date_enregistrement_vague2": "2025-01-15",
+      "date_transfert_reconduction": "2025-01-20",
+      "date_depot_departemental": "2025-02-01",
+      "date_depot_regional": "2025-02-10",
+      "date_examen_theorique": "2025-03-15",
+      "date_examen_pratique": "2025-03-20",
+      "active": true
+    }
+  ]
+}
+```
+
+---
+
+### 27. Centres d'examen
+**GET** `/centres-examen`
+
+**Headers:** Aucun (endpoint public)
+
+**Réponse (200):**
+```json
+{
+  "success": true,
+  "centres_examen": [
+    {
+      "id": 1,
+      "nom": "Centre Yaoundé",
+      "adresse": "Rue 123, Yaoundé",
+      "ville": "Yaoundé",
+      "active": true
+    },
+    {
+      "id": 2,
+      "nom": "Centre Douala",
+      "adresse": "Avenue 456, Douala",
+      "ville": "Douala",
+      "active": true
+    }
+  ]
+}
+```
+
+---
+
+### 28. Lieux de pratique
+**GET** `/lieux-pratique`
+
+**Headers:** Aucun (endpoint public)
+
+**Réponse (200):**
+```json
+{
+  "success": true,
+  "lieux_pratique": [
+    {
+      "id": 1,
+      "nom": "Circuit Bastos",
+      "adresse": "Bastos, Yaoundé",
+      "ville": "Yaoundé",
+      "active": true
+    },
+    {
+      "id": 2,
+      "nom": "Circuit Omnisport",
+      "adresse": "Omnisport, Yaoundé",
+      "ville": "Yaoundé",
+      "active": true
+    }
+  ]
+}
+```
+
+---
+
+### 29. Jours de pratique
+**GET** `/jours-pratique`
+
+**Headers:** Aucun (endpoint public)
+
+**Réponse (200):**
+```json
+{
+  "success": true,
+  "jours_pratique": [
+    {
+      "id": 1,
+      "lieu_pratique_id": 1,
+      "jour": "samedi",
+      "heure_debut": "08:00:00",
+      "heure_fin": "12:00:00",
+      "active": true,
+      "lieuPratique": {
+        "id": 1,
+        "nom": "Circuit Bastos",
+        "adresse": "Bastos, Yaoundé"
+      }
+    },
+    {
+      "id": 2,
+      "lieu_pratique_id": 1,
+      "jour": "samedi",
+      "heure_debut": "14:00:00",
+      "heure_fin": "18:00:00",
+      "active": true,
+      "lieuPratique": {
+        "id": 1,
+        "nom": "Circuit Bastos",
+        "adresse": "Bastos, Yaoundé"
+      }
+    }
+  ]
+}
+```
+
+---
+
+### 30. Code parrainage par défaut
+**GET** `/code-parrainage-defaut`
+
+**Headers:** Aucun (endpoint public)
+
+**Réponse (200):**
+```json
+{
+  "success": true,
+  "code_parrainage": "ANGE2025"
+}
+```
+
+---
+
+### 31. Configuration générale
+**GET** `/configuration`
+
+**Headers:** Aucun (endpoint public)
+
+**Réponse (200):**
+```json
+{
+  "success": true,
+  "frais": {
+    "formation": 40000,
+    "inscription": 10000,
+    "examen_blanc": 12500,
+    "examen": 30000
+  },
+  "depot_minimum": 10000,
+  "whatsapp_support": "+237690123456",
+  "lien_telechargement": "https://app.autoecole-angeraphael.com/download",
+  "sessions_disponibles": [
+    {
+      "id": 1,
+      "nom": "Session Janvier 2025",
+      "date_examen_theorique": "2025-03-15"
+    }
+  ],
+  "types_permis": [
+    {
+      "value": "permis_a",
+      "label": "Permis A (Moto)",
+      "disponible": true
+    },
+    {
+      "value": "permis_b",
+      "label": "Permis B (Voiture)",
+      "disponible": true
+    },
+    {
+      "value": "permis_t",
+      "label": "Permis T (Tracteur)",
+      "disponible": true
+    },
+    {
+      "value": "permis_c",
+      "label": "Permis C (Poids lourd)",
+      "disponible": false
+    },
+    {
+      "value": "permis_d",
+      "label": "Permis D (Transport en commun)",
+      "disponible": false
+    },
+    {
+      "value": "permis_e",
+      "label": "Permis E (Remorque)",
+      "disponible": false
+    }
+  ],
+  "types_cours": [
+    {
+      "value": "en_ligne",
+      "label": "En ligne"
+    },
+    {
+      "value": "presentiel",
+      "label": "En présentiel (Samedi)"
+    },
+    {
+      "value": "les_deux",
+      "label": "Les deux"
+    }
+  ]
+}
+```
+
+---
+
+## Codes d'erreur HTTP
+
+| Code | Signification |
+|------|---------------|
+| 200  | Succès |
+| 201  | Créé avec succès |
+| 401  | Non authentifié |
+| 403  | Accès interdit |
+| 404  | Ressource non trouvée |
+| 422  | Erreur de validation |
+| 500  | Erreur serveur |
+
+---
+
+## Format des erreurs de validation
+
+```json
+{
+  "success": false,
+  "message": "Les données fournies ne sont pas valides",
+  "errors": {
+    "telephone": [
+      "Le téléphone est déjà utilisé"
+    ],
+    "password": [
+      "Le mot de passe doit contenir au moins 6 caractères"
+    ]
+  }
+}
+```
+
+---
+
+## Notes importantes pour les développeurs mobile
+
+### 1. Gestion du token
+- Stockez le token de manière sécurisée (Keychain iOS, Keystore Android)
+- Incluez le token dans toutes les requêtes authentifiées
+- Gérez l'expiration du token (redirection vers login)
+
+### 2. Cours théoriques vs pratiques
+- **Cours théoriques** : utilisent `url_web` (ouvrir dans une WebView)
+- **Cours pratiques** : utilisent `url_video` (lecteur vidéo natif)
+
+### 3. Progression
+- Vérifiez toujours `cours_debloques` avant d'afficher les cours
+- Vérifiez `accessible` avant de permettre l'accès à une leçon
+- Marquez les leçons comme terminées dès que l'utilisateur a fini
+
+### 4. Quiz
+- Ne montrez jamais `est_correcte` dans les réponses avant soumission
+- Gérez le timer côté client (duree_minutes)
+- Affichez les corrections après soumission
+
+### 5. Paiements
+- Montants toujours en FCFA (entier ou décimal)
+- Minimum de dépôt : 10000 FCFA
+- Vérifiez le solde avant les actions
+
+### 6. Parrainage
+- L'arbre peut être profond (limiter l'affichage à 3-4 niveaux)
+- Les niveaux vont de -1 à 3
+- Facilitez le partage du code et du message
+
+### 7. Notifications push (à implémenter)
+- Préparez la gestion des notifications
+- Types : info, succes, alerte, paiement, cours, parrainage
+
+### 8. Gestion offline
+- Mettez en cache les données du dashboard
+- Mettez en cache les leçons déjà consultées
+- Synchronisez la progression dès que connecté
+
+### 9. Images et médias
+- Préchargez les images des quiz
+- Gérez le cache des vidéos
+- Prévoyez des placeholders
+
+### 10. UX recommandée
+- Countdown timer pour l'examen sur le dashboard
+- Badges pour les niveaux de parrainage
+- Graphiques pour la progression
+- Historique avec filtres
+- Pull-to-refresh sur toutes les listes
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        // Configuration générale
+        Schema::create('config_paiements', function (Blueprint $table) {
+            $table->id();
+            $table->decimal('frais_formation', 10, 2)->default(40000);
+            $table->decimal('frais_inscription', 10, 2)->default(10000);
+            $table->decimal('frais_examen_blanc', 10, 2)->default(12500);
+            $table->decimal('frais_examen', 10, 2)->default(30000);
+            $table->decimal('depot_minimum', 10, 2)->default(10000);
+            $table->string('code_parrainage_defaut')->nullable();
+            $table->string('whatsapp_support')->nullable();
+            $table->string('lien_telechargement_app')->nullable();
+            $table->timestamps();
+        });
+
+        // Sessions d'examen
+        Schema::create('sessions1', function (Blueprint $table) {
+            $table->id();
+            $table->string('nom');
+            $table->date('date_communication_enregistrement')->nullable();
+            $table->date('date_enregistrement_vague1')->nullable();
+            $table->date('date_enregistrement_vague2')->nullable();
+            $table->date('date_transfert_reconduction')->nullable();
+            $table->date('date_depot_departemental')->nullable();
+            $table->date('date_depot_regional')->nullable();
+            $table->date('date_examen_theorique')->nullable();
+            $table->date('date_examen_pratique')->nullable();
+            $table->boolean('active')->default(true);
+            $table->timestamps();
+        });
+
+        // Centres d'examen
+        Schema::create('centres_examen', function (Blueprint $table) {
+            $table->id();
+            $table->string('nom');
+            $table->string('adresse')->nullable();
+            $table->string('ville')->nullable();
+            $table->boolean('active')->default(true);
+            $table->timestamps();
+        });
+
+        // Lieux de pratique
+        Schema::create('lieux_pratique', function (Blueprint $table) {
+            $table->id();
+            $table->string('nom');
+            $table->string('adresse')->nullable();
+            $table->string('ville')->nullable();
+            $table->boolean('active')->default(true);
+            $table->timestamps();
+        });
+
+        // Jours de pratique disponibles
+        Schema::create('jours_pratique', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('lieu_pratique_id')->constrained('lieux_pratique')->onDelete('cascade');
+            $table->enum('jour', ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']);
+            $table->time('heure_debut');
+            $table->time('heure_fin');
+            $table->boolean('active')->default(true);
+            $table->timestamps();
+        });
+
+        // Utilisateurs auto-école
+        Schema::create('auto_ecole_users', function (Blueprint $table) {
+            $table->id();
+            $table->string('nom');
+            $table->string('prenom');
+            $table->string('telephone')->unique();
+            $table->string('password');
+            $table->date('date_naissance')->nullable();
+            $table->string('quartier')->nullable();
+            $table->enum('type_permis', ['permis_a', 'permis_b', 'permis_t'])->default('permis_b');
+            $table->enum('type_cours', ['en_ligne', 'presentiel', 'les_deux'])->default('en_ligne');
+            $table->enum('vague', ['1', '2'])->default('1');
+            $table->foreignId('session_id')->nullable()->constrained('sessions1')->nullOnDelete();
+            $table->foreignId('centre_examen_id')->nullable()->constrained('centres_examen')->nullOnDelete();
+            $table->string('code_parrainage')->unique();
+            $table->foreignId('parrain_id')->nullable()->constrained('auto_ecole_users')->nullOnDelete();
+            $table->integer('niveau_parrainage')->default(-1); // -1 = pas encore de niveau
+            $table->decimal('solde', 12, 2)->default(0);
+            $table->boolean('validated')->default(false);
+            $table->boolean('cours_debloques')->default(false);
+
+            // Status des paiements
+            $table->enum('status_frais_formation', ['non_paye', 'paye', 'dispense'])->default('non_paye');
+            $table->enum('status_frais_inscription', ['non_paye', 'paye', 'dispense'])->default('non_paye');
+            $table->enum('status_examen_blanc', ['non_paye', 'paye', 'dispense'])->default('non_paye');
+            $table->enum('status_frais_examen', ['non_paye', 'paye', 'dispense'])->default('non_paye');
+
+            $table->text('description_paiement_formation')->nullable();
+            $table->text('description_paiement_inscription')->nullable();
+            $table->text('description_paiement_examen_blanc')->nullable();
+            $table->text('description_paiement_examen')->nullable();
+
+            $table->timestamp('premier_depot_at')->nullable();
+            $table->rememberToken();
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        // Dans votre migration, remplacer la table user_jours_pratique par :
+        Schema::create('user_lieux_pratique', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('auto_ecole_users')->onDelete('cascade');
+            $table->foreignId('lieu_pratique_id')->constrained('lieux_pratique')->onDelete('cascade');
+            $table->timestamps();
+        });
+
+        // Filleuls (pour traçabilité)
+        Schema::create('filleuls', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('parrain_id')->constrained('auto_ecole_users')->onDelete('cascade');
+            $table->foreignId('filleul_id')->constrained('auto_ecole_users')->onDelete('cascade');
+            $table->integer('niveau_parrain_lors_ajout')->default(0);
+            $table->timestamps();
+        });
+
+        // Modules de cours
+        Schema::create('modules', function (Blueprint $table) {
+            $table->id();
+            $table->string('nom');
+            $table->text('description')->nullable();
+            $table->enum('type', ['theorique', 'pratique']);
+            $table->enum('type_permis', ['permis_a', 'permis_b', 'tous'])->default('tous');
+            $table->integer('ordre')->default(0);
+            $table->boolean('active')->default(true);
+            $table->timestamps();
+        });
+
+        // Chapitres
+        Schema::create('chapitres', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('module_id')->constrained('modules')->onDelete('cascade');
+            $table->string('nom');
+            $table->text('description')->nullable();
+            $table->integer('ordre')->default(0);
+            $table->boolean('active')->default(true);
+            $table->timestamps();
+        });
+
+        // Leçons
+        Schema::create('lecons', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('chapitre_id')->constrained('chapitres')->onDelete('cascade');
+            $table->string('titre');
+            $table->text('contenu_texte')->nullable();
+            $table->string('url_web')->nullable(); // Pour cours théorique (webview)
+            $table->string('url_video')->nullable(); // Pour cours pratique
+            $table->integer('ordre')->default(0);
+            $table->integer('duree_minutes')->default(0);
+            $table->boolean('active')->default(true);
+            $table->timestamps();
+        });
+
+        // Quiz
+        Schema::create('quiz', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('chapitre_id')->constrained('chapitres')->onDelete('cascade');
+            $table->string('titre');
+            $table->text('description')->nullable();
+            $table->integer('note_passage')->default(12); // sur 20
+            $table->integer('duree_minutes')->default(30);
+            $table->integer('ordre')->default(0);
+            $table->boolean('active')->default(true);
+            $table->timestamps();
+        });
+
+        // Questions de quiz
+        Schema::create('questions', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('quiz_id')->constrained('quiz')->onDelete('cascade');
+            $table->text('enonce');
+            $table->string('image_url')->nullable();
+            $table->enum('type', ['qcm', 'vrai_faux']);
+            $table->text('explication')->nullable(); // Pour la correction
+            $table->integer('ordre')->default(0);
+            $table->integer('points')->default(1);
+            $table->boolean('active')->default(true);
+            $table->timestamps();
+        });
+
+        // Réponses aux questions
+        Schema::create('reponses', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('question_id')->constrained('questions')->onDelete('cascade');
+            $table->text('texte');
+            $table->boolean('est_correcte')->default(false);
+            $table->integer('ordre')->default(0);
+            $table->timestamps();
+        });
+
+        // Progression des leçons par utilisateur
+        Schema::create('progression_lecons', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('auto_ecole_users')->onDelete('cascade');
+            $table->foreignId('lecon_id')->constrained('lecons')->onDelete('cascade');
+            $table->boolean('completee')->default(false);
+            $table->timestamp('date_completion')->nullable();
+            $table->timestamps();
+
+            $table->unique(['user_id', 'lecon_id']);
+        });
+
+        // Résultats des quiz
+        Schema::create('resultats_quiz', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('auto_ecole_users')->onDelete('cascade');
+            $table->foreignId('quiz_id')->constrained('quiz')->onDelete('cascade');
+            $table->decimal('note', 5, 2);
+            $table->integer('total_questions');
+            $table->integer('bonnes_reponses');
+            $table->boolean('reussi')->default(false);
+            $table->json('reponses_utilisateur')->nullable();
+            $table->integer('tentative')->default(1);
+            $table->timestamps();
+        });
+
+        // Paiements
+        Schema::create('auto_ecole_paiements', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('auto_ecole_users')->onDelete('cascade');
+            $table->enum('type', ['depot', 'transfert_entrant', 'transfert_sortant', 'paiement_frais']);
+            $table->enum('methode', ['mobile_money', 'code_caisse', 'transfert', 'systeme'])->default('mobile_money');
+            $table->decimal('montant', 12, 2);
+            $table->decimal('solde_avant', 12, 2)->default(0);
+            $table->decimal('solde_apres', 12, 2)->default(0);
+            $table->string('reference')->unique();
+            $table->text('description')->nullable();
+            $table->enum('status', ['en_attente', 'valide', 'echoue', 'annule'])->default('en_attente');
+            $table->string('frais_type')->nullable(); // formation, inscription, examen_blanc, examen
+            $table->foreignId('destinataire_id')->nullable()->constrained('auto_ecole_users')->nullOnDelete();
+            $table->timestamps();
+        });
+
+        // Codes caisse
+        Schema::create('codes_caisse', function (Blueprint $table) {
+            $table->id();
+            $table->string('code')->unique();
+            $table->decimal('montant', 12, 2);
+            $table->foreignId('user_id')->nullable()->constrained('auto_ecole_users')->nullOnDelete();
+            $table->boolean('utilise')->default(false);
+            $table->timestamp('utilise_at')->nullable();
+            $table->timestamp('expire_at')->nullable();
+            $table->foreignId('cree_par')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamps();
+        });
+
+        // Notifications
+        Schema::create('auto_ecole_notifications', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('auto_ecole_users')->onDelete('cascade');
+            $table->string('titre');
+            $table->text('message');
+            $table->enum('type', ['info', 'succes', 'alerte', 'paiement', 'cours', 'parrainage']);
+            $table->boolean('lu')->default(false);
+            $table->json('data')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('auto_ecole_notifications');
+        Schema::dropIfExists('codes_caisse');
+        Schema::dropIfExists('auto_ecole_paiements');
+        Schema::dropIfExists('resultats_quiz');
+        Schema::dropIfExists('progression_lecons');
+        Schema::dropIfExists('reponses');
+        Schema::dropIfExists('questions');
+        Schema::dropIfExists('quiz');
+        Schema::dropIfExists('lecons');
+        Schema::dropIfExists('chapitres');
+        Schema::dropIfExists('modules');
+        Schema::dropIfExists('filleuls');
+        Schema::dropIfExists('user_lieux_pratique');
+        Schema::dropIfExists('auto_ecole_users');
+        Schema::dropIfExists('jours_pratique');
+        Schema::dropIfExists('lieux_pratique');
+        Schema::dropIfExists('centres_examen');
+        Schema::dropIfExists('sessions');
+        Schema::dropIfExists('config_paiements');
+    }
+};
+
+le but est de creer une application d'auto ecole (son nom sera Ange Raphael) pour les cours de Permis A et B
+dans l'application les utilisateurs auront acces au cours theorique , et pratique et il y'aura aussi un systeme de parrainage
+les cours seront payant et les utilisateurs auront un solde dans leur compte qui leur permettront de  payer
+les solde se chargeront via des depots (via une API de payement)
+il n'yaura pas la possibiliter de faire les retraits : juste d'envoyer et de transferer a un autre utilisateur
+les cours theorique seront dynamique avec beaucoup d'image pour rendre cela vivant
+les cours pratique seront essentiellement des videos qui seront presenter a l'utilisateur avec quelque explication texte
+le systeme de parrainge sera un systeme qui fonctionne en niveau
+
+deja voici tout les montants qu'un apprenants doit payer pour pouvoir avoir le permis
+
+40 000 FCFA pour les frais de formation
+10 000 FCFA pour l'inscription
+12,500 FCFA pour l'examen blanc
+30 000 FCFA pour les frais d'examen
+
+chaque nouvel utilisateur n'a encore aucun niveau
+
+le niveau 0 : pour y acceder l'utilisateur partage sont lien de parrainage a 3 personnes : ces 3 personnes utilisent sont liens pour s'inscrire (pas forcement payer)
+    ici le gain des qu'on atteint ce niveau c'est qu'on ne payent plus les 40k les seuls payements restant sont ceux si:
+        10 000 FCFA pour l'inscription
+        12,500 FCFA pour l'examen blanc
+        30 000 FCFA pour les frais d'examen
+
+le niveau 1 :  pour y acceder l'utilisateur partage sont lien de parrainage a 3 personnes : ces 3 personnes utilisent sont liens pour s'inscrire et payer(faire au moins un depot)
+    ici le gain des qu'on atteint ce niveau c'est qu'on ne payent plus les 40k et les 10k les seuls payements restant sont ceux si:
+        12,500 FCFA pour l'examen blanc
+        30 000 FCFA pour les frais d'examen
+le niveau 2 : pour y acceder il faut que les 3 filleuls de l'utilisateur soit tous au moins au niveau 1.
+    ici le gain des qu'on atteint ce niveau c'est qu'on ne payent plus les 40k , les 10k ni les 12.5k les seuls payements restant sont ceux si:
+        30 000 FCFA pour les frais d'examen
+le niveau 3: pour y acceder il faut que les 3 filleuls de l'utilisateur soit tous au moins au niveau 2.
+        ici le gain des qu'on atteint ce niveau c'est qu'on ne payent plus rien
+
+
+un utilisateur ne peut avoir que 3 filleuls , si il y'a de nouvelle inscription via le lien de parrainage alors les nouveaux vont aller s'ajouter au niveau de ses filleuls ou sous filleuls qui n'ont pas encore 3 filleuls complet : (en utilisant unn parcours en profondeur)
+pour les frais (40k,10k,12.5k,30k) l'admin pourra les modifier
+a chaque fois qu'un utilisateur atteint un nouveau niveau le status du payment de la tranche qui est impliquer dans le niveau passe automatiquement a 'payee' et avec une description qui explique que le moyen de payement c'est l'atteinte du niveau en question
+
+dans la screen de parainage il y'aura un bouton de partage qui part avec le message suivant : 😊 Inscris-toi à l'Auto-École Ange Raphael avec mon code de parrainage : ARB-A7A4F5 🚗
+
+🚘 Apprends à conduire et obtiens ton permis A & B GRATUITEMENT 🥳
+
+📲Cliquez sur le lien pour télécharger l'application et vous inscrire 👉 [lien]
+le lien sera recuperer via l'API
+
+les cours sont diviser en modules->chapitres->lecons
+
+
+les cours (theorique et pratique) sont accessible seulement si l'utilisateur a deja fait un premier depot
+des que l'utilisateur fait son premier depot , tous les cours sont debloquer
+mais tant qu'il n'a pas encore fait de depot , il n'a acces qu'a la structure des cours mais sans pouvoir voir le contenu (donc il voit peut naviguer entre les module chap et lecon mais ils sont desactiver en attendant le paiement)
+
+a la fin de chaque chapitre il y'a des quiz qui permettent d'evaluer les niveaux de l'apprenant : il ne passe au chapitre suivant que s'il a au moins 12/20 ou la note minimale configurer au quiz : de plus si le quiz a un timer la screen du quiz doit se fermer automatiquement apres ce timer
+les quiz sont sous forme de QCm et vrai ou faux
+
+un utilisateur peut recommencer un quiz autant de fois qu'il le souhaite et a la fin du quiz il doit avoir la correction complete du quiz
+sauf que s'il avait deja une note de plus de 12 la note ne va plus changer mm s'il a 20 apres avoir recommencer
+par contre s'il avait pas encore + de 12 , quand il va recommencer s'il a plus de 12 la nouvelle note sera sa note officiel
+
+tant qu'un utilisateur n'a pas encore fini le quiz d'un chapitre tout les chapitres suivant sont desactiver (et un module n'est activer que si le module precedent a ete terminer totalement)
+
+l'utilisateur pourra aussi faire un depot dans son compte via un code caisse qui sera generer par l'admin et remis a l'utilisateur qui l'utilisera lors du paiement et recevra dans son compte la somme defini par l'admin lors de la creation du code
+aucun depot en dessous de 10 000 FCFA
+
+Welcome:
+    a la vue welcome on aura en boucle un petit son de voiture (moteur en marche vroum, vroum)
+    a cette vue on aura une description de l'application
+    on aura un seul bouton connexion
+
+Connexion:
+    connexion via numero de telphone et mot de passe
+    avec option pour mot de passe oublier et inscription si pas de compte
+Mot de passe oublier:
+    dans ce cas une discussion whatsapp est lancer vers un numero configurer par l'admin pour dire (j'ai oublier mon mot de passe j'aimerais le renitialiser)
+    l'admin aura un interface pour pouvoir le faire mm sans connaitre l'ancien
+inscription :
+    Formulaire d'inscription
+    pour s'inscrire on demande a l'utilisateur son nom , prenom , date de naissance,categorie de permis,choix du type de cours theorique,code parrainage ,numero de telephone,mot de passe et confirmation du mot de passe, quartier , de choisir la session d'examen et la vague (1 ou 2) qu'il vise , de choisir les lieu d'examens et les lieux de pratique.
+    les sessions d'examen sont caracteriser par les dates suivantes :
+
+        Delais de communication e d'enregitrement (c celui si qu'on utilise pour activer ou desactiver(ne plus afficher) un session lors de l'inscription ) : lorsque la date d'enregistrement des 2 vague est passer on n'affiche plus xa a l'inscription
+        Delais d'enregistrement en ligne (ici on specifie pour la vague 1 et pour la vague 2)
+        Delais de transfert en ligne et reconduction
+        Depot des dossiers a la departemental
+        Depot des dossier au regional
+        Examen national theorique + Examen pratique
+        (chacun de ces dates sera configurer pour chaque session par l'admin)
+        a l'inscription on precise a l'utilisateur la session active en fonction de la date actuel et la date de l'enregistrement des differents sessions(match)
+        les lieux d'examen seront aussi configure par l'admin
+    pour les categorie de permis on affichera tous les type de permis qui existe en mode menu deroulant (mais seul les permis A et B et T seront disponbile lors du choix)
+    le code de parrainage est obligatoire et si quelqu'un n'a pas de code de parrainage il y'aura un petit bouton pour dire 'je n'ai pas de code' qui fera une requete a l'API pour obtenir le code par defaut configurer par l'admin
+    les type de cours theorique disponible sont : en ligne , en presentiel(samedi),les 2
+
+Dashboard:
+    ->au debut on a d'abord un conteneur qui contient le nom de l'utilisateur et un message de bienvenue
+    ->puis a coter un avatar (le profil sera la combinaison des lettres de l'utilisateur (un nom et un prenom mm s'il en a plus d'un lors de l'inscription))type
+    ->cliquer sur le profil ouvre une screen de profil qui permet a l'utilisateur de pouvoir savoir les infos relative a son compte (infos perso, info mentionner lors de l'inscription) et a la fin un bouton de deconnexion
+    ->l'utilisateur via le profil pourra modifier quasi toutes les infos modifiables lui concernant (nom , prenom , mot de passe , numero de telephone , lieu pratique , type de cours ,quartier) on ne peux pas modifier la categorie de permis ou la session
+    ->un conteneur qui affiche le solde
+    ->un conteneur qui affiche de maniere exact le temps manquant avant le jour d'examen officiel du permis (en heures , minutes et seconde dynamique  (les secondes s'ecoule de faxon dynamique comme sur le site de hostinger))
+    ->ensuite il y'a un second conteneur pour presenter a l'utilisateur les details (differentes date caracterisant) de la sessions qu'il a choisi a l'inscription avec a coter de chaque date un status (passer ou en cours) : xa permet a l'utilisateur de savoir a chaque fois qquel sont les dethlines et les differentes dates
+    ->ensuite un conteneur qui affiche les differents prix donc doit s'aquitter l'apprenant (40k,10k,12.5k,30k) avec les labels et a coter on specifie le status
+    ->un prochain conteneur qui nous dis si on est pret a aller composer l'examen ou pas (pour etre pret il faut avoir solder tout les frais et terminer tous les modules theoriques et pratique)
+    ->un dernier conteneur va presenter le parcours de formations avec l'app
+        s'inscrire
+        effectuer les paiement
+        suivre les cours
+        aller presenter l'examen officiel le jour j
+
+Payement&transfert:
+    ici on aura simplement deux choix code caisse et paiement mobile
+        par defaut c'est payement mobile des qu'on y accede
+    ensuite il faudra entrer le montant qu'on veut recharger dans notre compte (au moins 10 000F) et une fois cela fait on appuie sur recharger
+    toujours dans cette screen on pourra avoir l'option pour transferer les fonds de un autre compte existant de Ange Raphael : (en utilisant le numero du destinataire et avant d'envoyer l'app chargera le profil du destinataire et on validera si les infos correspondent) : aucun frais n'est appliquer lors des transfert
+    pour le payement par code caisse : l'admin genera juste un code a usage unique et utilisable seulement par l'utilisateur en question une seule fois
+    c'est aussi dans cette vue qu'on va pouvoir decider de payer les differents frais (qui se payent tous de faxon independante) : donc si j'ai un solde superieur au montant des frais d'examen blanc par exemple je vais pouvoir les payer et ce sera une simple deduction sur le solde
+
+Cours theorique
+    Deja les cours theorique doivent etre creer via un titre , une description et un url (l'url sera utiliser pour que l'app mobile ouvre une webview vers l'url pour acceder au cours) en effet , le cours a trop d'image et d'animation pour pouvoir le creer directement pour mobile donc je vais creer les cours en mode web et utiliser webview pour donner l'acces au cours aux utilisateurs
+    visualiser sa progression
+    un bouton j'ai terminer le cours permettant de progresser vers les cours suivant du chapitre
+    les quiz seront automatiquement disponible a la fin de chaque chapitre
+Cours pratique:
+    Ici les utilisateur accede au cours via l'app mobile directement : en effet ici l'api va servir le lien vers la video mais l'app mobile va charger la video dans un conteneur mobile qui aura toute les fonctionnaliter d'un lecteur video natifs
+    en plus de la video , on pourra aujouter un peu de texte(style openclassroom) pour completer le cours
+    visualiser sa progrssion
+    un bouton j'ai terminer le cours permettant de progresser vers les cours suivant du chapitre
+    les quiz seront automatiquement disponible a la fin de chaque chapitre
+Quiz:
+    Les quiz seront configurer par l'admin en specifiant le chapitre lier au quiz
+    a la fin d'un quiz , il doit avoir un bouton voir correction , un bouton refaire le quiz , un bouton retourner au dashboard
+    A chaque fois lors de la creation du cours l'admin devra preciser si c un cours pour le permis A ou B.
+
+Parrainage:
+    Dans cette scren on va simplement afficher le niveau de l'utilisateur actuel
+    afficher son code de parrainage
+    puis lui rappeler les avantages du niveau suivant
+    ensuite lui expliquer le systeme de parrainage
+    ensuite afficher un bouton lui permettant d'acceder a la liste de ces filleuls (pour voir leur info comme leur nom , les niveaux actuel)
+
+on va pouvoir via l'interface admin
+    ->configurer les infos neccessaire(paiement , lieu pratique ,sessions dexamen  vague ...)
+    ->charger les cours
+    ->charger les quiz
+    ->gerer les utilisateur et les suivre tant sur le niveaux financier (via les frais deja payer) que leur apprentissage (module deja terminer et note(du quiz) par chapitre , date de sessions)
+    ->gerer les paiement...
+
+l'app doit etre excellement styliser
+
+je veux une app react native + expo
+
+je veux une application mobile optimiser et tres bien structurer : je veux utiliser les top navigations et non des bottonms navigation
+
+je veux que au niveau des hierachie Module->Chapitre->Lecons & Quiz il y'a a chaque fois dans chaque screen des liens pour bien naviguer sans simplement faire des screen redirect back mais en naviguant de la bonne faxon et en actualisant quand neccessaire
+
+je veut une app mobile react native qui n'est qu'une interface qui se nourrit de l'endpoint api et fourni une interface mobile parfaite pour les utilisateurs
+
+NB: le lien de l'api du backend doit etre stocker dans un seul fichier pour faciliter le changement du lien au cas ou
+
+
