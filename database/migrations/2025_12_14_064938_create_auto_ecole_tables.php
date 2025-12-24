@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    
     public function up(): void
     {
         // Configuration générale
@@ -225,21 +226,52 @@ return new class extends Migration
         });
 
         // Paiements
-        Schema::create('auto_ecole_paiements', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained('auto_ecole_users')->onDelete('cascade');
-            $table->enum('type', ['depot', 'transfert_entrant', 'transfert_sortant', 'paiement_frais']);
-            $table->enum('methode', ['mobile_money', 'code_caisse', 'transfert', 'systeme'])->default('mobile_money');
-            $table->decimal('montant', 12, 2);
-            $table->decimal('solde_avant', 12, 2)->default(0);
-            $table->decimal('solde_apres', 12, 2)->default(0);
-            $table->string('reference')->unique();
-            $table->text('description')->nullable();
-            $table->enum('status', ['en_attente', 'valide', 'echoue', 'annule'])->default('en_attente');
-            $table->string('frais_type')->nullable(); // formation, inscription, examen_blanc, examen
-            $table->foreignId('destinataire_id')->nullable()->constrained('auto_ecole_users')->nullOnDelete();
-            $table->timestamps();
-        });
+Schema::create('auto_ecole_paiements', function (Blueprint $table) {
+    $table->id();
+
+    // Relations
+    $table->foreignId('user_id')
+        ->constrained('auto_ecole_users')
+        ->cascadeOnDelete();
+
+    $table->foreignId('destinataire_id')
+        ->nullable()
+        ->constrained('auto_ecole_users')
+        ->nullOnDelete();
+
+    // Types & méthodes
+    $table->string('type')->nullable(); // depot, retrait, transfert_entrant, transfert_sortant, paiement_frais
+    $table->string('type_paiement')->nullable(); // duplication volontaire (compatibilité logique)
+    $table->string('methode')->nullable(); // mobile_money, code_caisse, transfert, systeme
+    $table->string('methode_paiement')->nullable();
+
+    // Montants & soldes
+    $table->decimal('montant', 12, 2);
+    $table->decimal('solde_avant', 12, 2)->default(0);
+    $table->decimal('solde_apres', 12, 2)->default(0);
+
+    // Références & transactions
+    $table->string('transaction_id')->nullable()->index();
+    $table->string('reference')->unique();
+    $table->string('transaction_externe')->nullable();
+    $table->string('token_pay')->nullable();
+
+    // Tranches & frais
+    $table->string('tranche')->nullable();
+    $table->string('frais_type')->nullable(); // formation, inscription, examen_blanc, examen
+
+    // Statuts (double gestion pour compatibilité)
+    $table->string('statut')->nullable();
+    $table->string('status')->default('en_attente');
+
+    // Informations diverses
+    $table->text('description')->nullable();
+    $table->text('notes')->nullable();
+    $table->dateTime('date_paiement')->nullable();
+
+    $table->timestamps();
+});
+
 
         // Codes caisse
         Schema::create('codes_caisse', function (Blueprint $table) {

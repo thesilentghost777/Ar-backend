@@ -32,6 +32,10 @@ Route::get('/code-parrainage-defaut', [AuthController::class, 'codeParrainageDef
 // Configuration générale
 Route::get('/configuration', [AuthController::class, 'configuration']);
 
+// routes/api.php (ajoutez ces lignes à la fin ou dans le groupe approprié)
+Route::post('/webhook/payment', [PaiementController::class, 'webhook']);
+Route::get('/end_payment', [PaiementController::class, 'endPayment']);
+
 // Routes protégées
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/deconnexion', [AuthController::class, 'deconnexion']);

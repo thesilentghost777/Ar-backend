@@ -1,13 +1,13 @@
 <?php
-
 namespace App\Services\AutoEcole;
 
 use App\Models\AutoEcoleUser;
 use App\Models\AutoEcolePaiement;
 use App\Models\CodeCaisse;
 use App\Models\ConfigPaiement;
-use App\Models\AutoEcoleNotification;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class PaiementService
 {
@@ -16,13 +16,16 @@ class PaiementService
     public function __construct(AuthService $authService)
     {
         $this->authService = $authService;
+        Log::info('PaiementService initialisé');
     }
 
     public function deposerViaMobile(AutoEcoleUser $user, float $montant, string $numeroPayeur): array
     {
+        Log::info("Tentative de dépôt pour l'utilisateur {$user->id}, montant: {$montant}, payeur: {$numeroPayeur}");
         $config = ConfigPaiement::getConfig();
 
         if ($montant < $config->depot_minimum) {
+            Log::warning("Montant inférieur au dépôt minimum ({$config->depot_minimum}) pour l'utilisateur {$user->id}");
             return [
                 'success' => false,
                 'message' => "Le dépôt minimum est de {$config->depot_minimum} FCFA"
@@ -31,80 +34,74 @@ class PaiementService
 
         try {
             DB::beginTransaction();
+            Log::info("Transaction DB démarrée pour le dépôt de l'utilisateur {$user->id}");
 
-            // Simulateur de paiement mobile (à remplacer par vraie API)
-            $paiementReussi = $this->simulerPaiementMobile($montant, $numeroPayeur);
-
-            if (!$paiementReussi) {
-                return [
-                    'success' => false,
-                    'message' => 'Échec du paiement mobile'
-                ];
-            }
+            // Annuler les anciens paiements en attente
+            $paiementsAnnules = AutoEcolePaiement::where('user_id', $user->id)
+                ->where('type', 'depot')
+                ->where('methode', 'mobile_money')
+                ->where('status', 'en_attente')
+                ->update(['status' => 'annule']);
+            Log::info("Anciens paiements en attente annulés: {$paiementsAnnules}");
 
             $soldeAvant = $user->solde;
-            $soldeApres = $soldeAvant + $montant;
 
-            // Créer le paiement
+            // Créer un paiement en attente
             $paiement = AutoEcolePaiement::create([
                 'user_id' => $user->id,
                 'type' => 'depot',
                 'methode' => 'mobile_money',
                 'montant' => $montant,
                 'solde_avant' => $soldeAvant,
-                'solde_apres' => $soldeApres,
+                'solde_apres' => $soldeAvant,
                 'reference' => AutoEcolePaiement::genererReference(),
                 'description' => "Dépôt via Mobile Money - {$numeroPayeur}",
-                'status' => 'valide'
+                'status' => 'en_attente'
             ]);
+            Log::info("Paiement en attente créé: ID {$paiement->id}, reference {$paiement->reference}");
 
-            // Mettre à jour le solde
-            $user->solde = $soldeApres;
+            // Appel à l'API Money Fusion
+            $apiUrl = env('MONEY_FUSION_API_URL');
+            $paymentData = [
+                'totalPrice' => $montant,
+                'article' => [['depot' => $montant]],
+                'personal_Info' => [['userId' => $user->id]],
+                'numeroSend' => $numeroPayeur,
+                'nomclient' => $user->nomComplet,
+                'return_url' => env('MONEY_FUSION_RETURN_URL'),
+                'webhook_url' => env('MONEY_FUSION_WEBHOOK_URL')
+            ];
+            Log::info('Appel API Money Fusion', ['url' => $apiUrl, 'data' => $paymentData]);
 
-            // Premier dépôt?
-            $estPremierDepot = is_null($user->premier_depot_at);
-            if ($estPremierDepot) {
-                $user->premier_depot_at = now();
-                $user->cours_debloques = true;
+            $response = Http::post($apiUrl, $paymentData);
+            Log::info('Réponse API Money Fusion', ['response' => $response->json()]);
+
+            if ($response->failed() || !$response['statut']) {
+                $paiement->status = 'annule';
+                $paiement->save();
+                Log::error('Échec de l\'initialisation du paiement', ['response' => $response->json()]);
+                throw new \Exception($response['message'] ?? 'Échec de l\'initialisation du paiement');
             }
 
-            $user->save();
-
-            // Si premier dépôt, notifier le parrain et vérifier les niveaux
-            if ($estPremierDepot && $user->parrain_id) {
-                $this->authService->verifierEtMettreAJourNiveauApresDepot($user->parrain_id);
-
-                AutoEcoleNotification::envoyer(
-                    $user->parrain_id,
-                    'Votre filleul a fait son premier dépôt!',
-                    "{$user->prenom} {$user->nom} a effectué son premier dépôt.",
-                    'parrainage'
-                );
-            }
-
-            // Notification
-            AutoEcoleNotification::envoyer(
-                $user->id,
-                'Dépôt effectué',
-                "Votre dépôt de {$montant} FCFA a été crédité sur votre compte. Nouveau solde: {$soldeApres} FCFA",
-                'paiement'
-            );
+            $paiement->token_pay = $response['token'];
+            $paiement->save();
 
             DB::commit();
+            Log::info("Transaction DB commitée pour le paiement {$paiement->id}");
 
             return [
                 'success' => true,
-                'message' => 'Dépôt effectué avec succès',
-                'paiement' => $paiement,
-                'nouveau_solde' => $soldeApres,
-                'cours_debloques' => $user->cours_debloques
+                'message' => 'Paiement initié, veuillez procéder au paiement',
+                'url' => $response['url']
             ];
-
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error("Erreur lors de l'initialisation du dépôt pour l'utilisateur {$user->id}", [
+                'error' => $e->getMessage()
+            ]);
             return [
                 'success' => false,
-                'message' => 'Erreur lors du dépôt: ' . $e->getMessage()
+                'message' => 'Erreur lors de l\'initialisation du dépôt: ' . $e->getMessage()
             ];
         }
     }
@@ -112,21 +109,18 @@ class PaiementService
     public function deposerViaCodeCaisse(AutoEcoleUser $user, string $code): array
     {
         $codeCaisse = CodeCaisse::where('code', $code)->first();
-
         if (!$codeCaisse) {
             return [
                 'success' => false,
                 'message' => 'Code caisse invalide'
             ];
         }
-
         if (!$codeCaisse->estValide()) {
             return [
                 'success' => false,
                 'message' => 'Ce code a déjà été utilisé ou a expiré'
             ];
         }
-
         // Vérifier si le code est destiné à cet utilisateur
         if ($codeCaisse->user_id && $codeCaisse->user_id !== $user->id) {
             return [
@@ -134,20 +128,16 @@ class PaiementService
                 'message' => 'Ce code n\'est pas valide pour votre compte'
             ];
         }
-
         try {
             DB::beginTransaction();
-
             $montant = $codeCaisse->montant;
             $soldeAvant = $user->solde;
             $soldeApres = $soldeAvant + $montant;
-
             // Marquer le code comme utilisé
             $codeCaisse->utilise = true;
             $codeCaisse->utilise_at = now();
             $codeCaisse->user_id = $user->id;
             $codeCaisse->save();
-
             // Créer le paiement
             $paiement = AutoEcolePaiement::create([
                 'user_id' => $user->id,
@@ -160,34 +150,21 @@ class PaiementService
                 'description' => "Dépôt via Code Caisse - {$code}",
                 'status' => 'valide'
             ]);
-
             // Mettre à jour le solde
             $user->solde = $soldeApres;
-
             // Premier dépôt?
             $estPremierDepot = is_null($user->premier_depot_at);
             if ($estPremierDepot) {
                 $user->premier_depot_at = now();
                 $user->cours_debloques = true;
             }
-
             $user->save();
-
             // Si premier dépôt, vérifier les niveaux du parrain
             if ($estPremierDepot && $user->parrain_id) {
                 $this->authService->verifierEtMettreAJourNiveauApresDepot($user->parrain_id);
             }
-
-            // Notification
-            AutoEcoleNotification::envoyer(
-                $user->id,
-                'Dépôt effectué',
-                "Votre dépôt de {$montant} FCFA (code caisse) a été crédité. Nouveau solde: {$soldeApres} FCFA",
-                'paiement'
-            );
-
+           
             DB::commit();
-
             return [
                 'success' => true,
                 'message' => 'Dépôt effectué avec succès',
@@ -195,7 +172,6 @@ class PaiementService
                 'nouveau_solde' => $soldeApres,
                 'cours_debloques' => $user->cours_debloques
             ];
-
         } catch (\Exception $e) {
             DB::rollBack();
             return [
@@ -204,7 +180,6 @@ class PaiementService
             ];
         }
     }
-
     public function transferer(AutoEcoleUser $expediteur, string $telephoneDestinataire, float $montant): array
     {
         if ($montant <= 0) {
@@ -213,39 +188,31 @@ class PaiementService
                 'message' => 'Le montant doit être supérieur à 0'
             ];
         }
-
         if ($expediteur->solde < $montant) {
             return [
                 'success' => false,
                 'message' => 'Solde insuffisant'
             ];
         }
-
         $destinataire = AutoEcoleUser::where('telephone', $telephoneDestinataire)->first();
-
         if (!$destinataire) {
             return [
                 'success' => false,
                 'message' => 'Destinataire non trouvé'
             ];
         }
-
         if ($destinataire->id === $expediteur->id) {
             return [
                 'success' => false,
                 'message' => 'Vous ne pouvez pas vous transférer à vous-même'
             ];
         }
-
         try {
             DB::beginTransaction();
-
             $reference = AutoEcolePaiement::genererReference();
-
             // Débiter l'expéditeur
             $soldeAvantExp = $expediteur->solde;
             $soldeApresExp = $soldeAvantExp - $montant;
-
             AutoEcolePaiement::create([
                 'user_id' => $expediteur->id,
                 'type' => 'transfert_sortant',
@@ -258,14 +225,11 @@ class PaiementService
                 'status' => 'valide',
                 'destinataire_id' => $destinataire->id
             ]);
-
             $expediteur->solde = $soldeApresExp;
             $expediteur->save();
-
             // Créditer le destinataire
             $soldeAvantDest = $destinataire->solde;
             $soldeApresDest = $soldeAvantDest + $montant;
-
             AutoEcolePaiement::create([
                 'user_id' => $destinataire->id,
                 'type' => 'transfert_entrant',
@@ -278,27 +242,10 @@ class PaiementService
                 'status' => 'valide',
                 'destinataire_id' => $expediteur->id
             ]);
-
             $destinataire->solde = $soldeApresDest;
             $destinataire->save();
-
-            // Notifications
-            AutoEcoleNotification::envoyer(
-                $expediteur->id,
-                'Transfert effectué',
-                "Vous avez transféré {$montant} FCFA à {$destinataire->prenom}. Nouveau solde: {$soldeApresExp} FCFA",
-                'paiement'
-            );
-
-            AutoEcoleNotification::envoyer(
-                $destinataire->id,
-                'Transfert reçu',
-                "Vous avez reçu {$montant} FCFA de {$expediteur->prenom}. Nouveau solde: {$soldeApresDest} FCFA",
-                'paiement'
-            );
-
+         
             DB::commit();
-
             return [
                 'success' => true,
                 'message' => 'Transfert effectué avec succès',
@@ -308,7 +255,6 @@ class PaiementService
                     'prenom' => $destinataire->prenom
                 ]
             ];
-
         } catch (\Exception $e) {
             DB::rollBack();
             return [
@@ -317,18 +263,15 @@ class PaiementService
             ];
         }
     }
-
     public function rechercherDestinataire(string $telephone): array
     {
         $user = AutoEcoleUser::where('telephone', $telephone)->first();
-
         if (!$user) {
             return [
                 'success' => false,
                 'message' => 'Utilisateur non trouvé'
             ];
         }
-
         return [
             'success' => true,
             'destinataire' => [
@@ -339,11 +282,9 @@ class PaiementService
             ]
         ];
     }
-
     public function payerFrais(AutoEcoleUser $user, string $typeFrais): array
     {
         $config = ConfigPaiement::getConfig();
-
         $fraisMapping = [
             'formation' => [
                 'montant' => $config->frais_formation,
@@ -370,18 +311,15 @@ class PaiementService
                 'label' => 'Frais d\'examen'
             ]
         ];
-
         if (!isset($fraisMapping[$typeFrais])) {
             return [
                 'success' => false,
                 'message' => 'Type de frais invalide'
             ];
         }
-
         $frais = $fraisMapping[$typeFrais];
         $statusField = $frais['status_field'];
         $descriptionField = $frais['description_field'];
-
         // Vérifier si déjà payé ou dispensé
         if ($user->{$statusField} !== 'non_paye') {
             return [
@@ -389,22 +327,17 @@ class PaiementService
                 'message' => 'Ces frais sont déjà payés ou dispensés'
             ];
         }
-
         $montant = $frais['montant'];
-
         if ($user->solde < $montant) {
             return [
                 'success' => false,
                 'message' => "Solde insuffisant. Il vous manque " . ($montant - $user->solde) . " FCFA"
             ];
         }
-
         try {
             DB::beginTransaction();
-
             $soldeAvant = $user->solde;
             $soldeApres = $soldeAvant - $montant;
-
             // Créer le paiement
             AutoEcolePaiement::create([
                 'user_id' => $user->id,
@@ -418,30 +351,19 @@ class PaiementService
                 'status' => 'valide',
                 'frais_type' => $typeFrais
             ]);
-
             // Mettre à jour l'utilisateur
             $user->solde = $soldeApres;
             $user->{$statusField} = 'paye';
             $user->{$descriptionField} = 'Payé le ' . now()->format('d/m/Y à H:i');
             $user->save();
-
-            // Notification
-            AutoEcoleNotification::envoyer(
-                $user->id,
-                'Paiement effectué',
-                "{$frais['label']} ({$montant} FCFA) payés avec succès. Nouveau solde: {$soldeApres} FCFA",
-                'paiement'
-            );
-
+          
             DB::commit();
-
             return [
                 'success' => true,
                 'message' => 'Paiement effectué avec succès',
                 'nouveau_solde' => $soldeApres,
                 'frais_payes' => $frais['label']
             ];
-
         } catch (\Exception $e) {
             DB::rollBack();
             return [
@@ -450,11 +372,9 @@ class PaiementService
             ];
         }
     }
-
     public function getStatusFrais(AutoEcoleUser $user): array
     {
         $config = ConfigPaiement::getConfig();
-
         return [
             'success' => true,
             'frais' => [
@@ -486,14 +406,12 @@ class PaiementService
             'solde' => $user->solde
         ];
     }
-
     public function getHistorique(AutoEcoleUser $user, int $limit = 20): array
     {
         $paiements = AutoEcolePaiement::where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get();
-
         return [
             'success' => true,
             'paiements' => $paiements,
@@ -501,10 +419,82 @@ class PaiementService
         ];
     }
 
-    private function simulerPaiementMobile(float $montant, string $numero): bool
+     public function handleWebhook(array $data): array
     {
-        // Simulateur - Toujours retourne true
-        // À remplacer par l'intégration avec une vraie API de paiement
-        return true;
+        Log::info('Webhook reçu', ['data' => $data]);
+
+        $tokenPay = $data['tokenPay'] ?? null;
+        $event = $data['event'] ?? null;
+
+        if (!$tokenPay || !$event) {
+            Log::warning('Webhook invalide: tokenPay ou event manquant');
+            return ['success' => false, 'message' => 'Données webhook invalides'];
+        }
+
+        $paiement = AutoEcolePaiement::where('token_pay', $tokenPay)
+            ->where('status', 'en_attente')
+            ->first();
+
+        if (!$paiement) {
+            Log::warning("Paiement non trouvé ou déjà traité pour tokenPay {$tokenPay}");
+            return ['success' => false, 'message' => 'Paiement non trouvé ou déjà traité'];
+        }
+
+        $user = $paiement->user;
+
+        try {
+            DB::beginTransaction();
+            Log::info("Transaction DB démarrée pour le webhook du paiement {$paiement->id}");
+
+            if ($event === 'payin.session.completed') {
+                if ($data['Montant'] != $paiement->montant) {
+                    Log::error("Montant mismatch pour le paiement {$paiement->id}", [
+                        'paiement' => $paiement->montant,
+                        'webhook' => $data['Montant']
+                    ]);
+                    throw new \Exception('Montant mismatch');
+                }
+
+                $soldeApres = $paiement->solde_avant + $paiement->montant;
+                $paiement->status = 'valide';
+                $paiement->solde_apres = $soldeApres;
+                $paiement->transaction_externe = $data['numeroTransaction'] ?? null;
+                $paiement->methode = $data['moyen'] ?? 'mobile_money';
+                $paiement->save();
+                Log::info("Paiement validé: ID {$paiement->id}, solde après: {$soldeApres}");
+
+                $user->solde = $soldeApres;
+                $estPremierDepot = is_null($user->premier_depot_at);
+                if ($estPremierDepot) {
+                    $user->premier_depot_at = now();
+                    $user->cours_debloques = true;
+                    Log::info("Premier dépôt de l'utilisateur {$user->id}");
+                }
+                $user->save();
+
+                if ($estPremierDepot && $user->parrain_id) {
+                    $this->authService->verifierEtMettreAJourNiveauApresDepot($user->parrain_id);
+                    
+                    Log::info("Notification envoyée au parrain {$user->parrain_id}");
+                }
+
+               
+                Log::info("Notification envoyée à l'utilisateur {$user->id}");
+            } elseif ($event === 'payin.session.cancelled') {
+                $paiement->status = 'annule';
+                $paiement->save();
+                Log::info("Paiement annulé via webhook: ID {$paiement->id}");
+            }
+
+            DB::commit();
+            Log::info("Transaction DB commitée pour le webhook du paiement {$paiement->id}");
+            return ['success' => true];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Erreur lors du traitement du webhook pour le paiement {$paiement->id}", [
+                'error' => $e->getMessage()
+            ]);
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
     }
 }
