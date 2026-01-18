@@ -8,6 +8,7 @@ use App\Models\ConfigPaiement;
 use App\Models\AutoEcoleNotification;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class AuthService
@@ -118,18 +119,64 @@ class AuthService
     }
 
     public function connexion(string $telephone, string $password): array
-    {
-        $user = AutoEcoleUser::where('telephone', $telephone)->first();
+{
+    Log::debug('Service Auth - Recherche utilisateur', [
+        'telephone' => $telephone
+    ]);
 
-        if (!$user || !Hash::check($password, $user->password)) {
-            return [
-                'success' => false,
-                'message' => 'Identifiants incorrects'
-            ];
-        }
+    $user = AutoEcoleUser::where('telephone', $telephone)->first();
 
+    if (!$user) {
+        Log::warning('✗ Utilisateur non trouvé', [
+            'telephone' => $telephone
+        ]);
+        return [
+            'success' => false,
+            'message' => 'Identifiants incorrects'
+        ];
+    }
+
+    Log::debug('Utilisateur trouvé', [
+        'user_id' => $user->id,
+        'telephone' => $telephone,
+        'has_password_hash' => !empty($user->password),
+        'hash_length' => strlen($user->password ?? ''),
+        'hash_starts_with' => substr($user->password ?? '', 0, 7), // Ex: $2y$10$ pour bcrypt
+        'is_bcrypt_hash' => str_starts_with($user->password ?? '', '$2y$'),
+        'password_provided_length' => strlen($password)
+    ]);
+
+    // Vérification du mot de passe
+    if (!Hash::check($password, $user->password)) {
+        Log::warning('✗ Mot de passe incorrect', [
+            'user_id' => $user->id,
+            'telephone' => $telephone,
+            'password_length' => strlen($password),
+            'hash_format' => substr($user->password ?? '', 0, 7),
+            'is_valid_bcrypt' => str_starts_with($user->password ?? '', '$2y$'),
+            'probable_cause' => str_starts_with($user->password ?? '', '$2y$') 
+                ? 'Mot de passe erroné' 
+                : 'ATTENTION: Mot de passe stocké en clair!'
+        ]);
+        return [
+            'success' => false,
+            'message' => 'Identifiants incorrects'
+        ];
+    }
+
+    Log::info('✓ Mot de passe vérifié avec succès', [
+        'user_id' => $user->id,
+        'telephone' => $telephone
+    ]);
+
+    try {
         // Créer le token
         $token = $user->createToken('auto-ecole-token')->plainTextToken;
+
+        Log::info('✓ Token créé avec succès', [
+            'user_id' => $user->id,
+            'token_prefix' => substr($token, 0, 10) . '...'
+        ]);
 
         return [
             'success' => true,
@@ -137,7 +184,21 @@ class AuthService
             'user' => $user->load(['session', 'centreExamen', 'parrain', 'lieuxPratique']),
             'token' => $token
         ];
+
+    } catch (\Exception $e) {
+        Log::error('Erreur lors de la création du token', [
+            'user_id' => $user->id,
+            'telephone' => $telephone,
+            'exception' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return [
+            'success' => false,
+            'message' => 'Erreur lors de la création de la session'
+        ];
     }
+}
 
     public function deconnexion(AutoEcoleUser $user): array
     {

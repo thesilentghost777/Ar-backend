@@ -20,91 +20,98 @@ class PaiementService
     }
 
     public function deposerViaMobile(AutoEcoleUser $user, float $montant, string $numeroPayeur): array
-    {
-        Log::info("Tentative de dépôt pour l'utilisateur {$user->id}, montant: {$montant}, payeur: {$numeroPayeur}");
-        $config = ConfigPaiement::getConfig();
-
-        if ($montant < $config->depot_minimum) {
-            Log::warning("Montant inférieur au dépôt minimum ({$config->depot_minimum}) pour l'utilisateur {$user->id}");
-            return [
-                'success' => false,
-                'message' => "Le dépôt minimum est de {$config->depot_minimum} FCFA"
-            ];
-        }
-
-        try {
-            DB::beginTransaction();
-            Log::info("Transaction DB démarrée pour le dépôt de l'utilisateur {$user->id}");
-
-            // Annuler les anciens paiements en attente
-            $paiementsAnnules = AutoEcolePaiement::where('user_id', $user->id)
-                ->where('type', 'depot')
-                ->where('methode', 'mobile_money')
-                ->where('status', 'en_attente')
-                ->update(['status' => 'annule']);
-            Log::info("Anciens paiements en attente annulés: {$paiementsAnnules}");
-
-            $soldeAvant = $user->solde;
-
-            // Créer un paiement en attente
-            $paiement = AutoEcolePaiement::create([
-                'user_id' => $user->id,
-                'type' => 'depot',
-                'methode' => 'mobile_money',
-                'montant' => $montant,
-                'solde_avant' => $soldeAvant,
-                'solde_apres' => $soldeAvant,
-                'reference' => AutoEcolePaiement::genererReference(),
-                'description' => "Dépôt via Mobile Money - {$numeroPayeur}",
-                'status' => 'en_attente'
-            ]);
-            Log::info("Paiement en attente créé: ID {$paiement->id}, reference {$paiement->reference}");
-
-            // Appel à l'API Money Fusion
-            $apiUrl = env('MONEY_FUSION_API_URL');
-            $paymentData = [
-                'totalPrice' => $montant,
-                'article' => [['depot' => $montant]],
-                'personal_Info' => [['userId' => $user->id]],
-                'numeroSend' => $numeroPayeur,
-                'nomclient' => $user->nomComplet,
-                'return_url' => env('MONEY_FUSION_RETURN_URL'),
-                'webhook_url' => env('MONEY_FUSION_WEBHOOK_URL')
-            ];
-            Log::info('Appel API Money Fusion', ['url' => $apiUrl, 'data' => $paymentData]);
-
-            $response = Http::post($apiUrl, $paymentData);
-            Log::info('Réponse API Money Fusion', ['response' => $response->json()]);
-
-            if ($response->failed() || !$response['statut']) {
-                $paiement->status = 'annule';
-                $paiement->save();
-                Log::error('Échec de l\'initialisation du paiement', ['response' => $response->json()]);
-                throw new \Exception($response['message'] ?? 'Échec de l\'initialisation du paiement');
-            }
-
-            $paiement->token_pay = $response['token'];
-            $paiement->save();
-
-            DB::commit();
-            Log::info("Transaction DB commitée pour le paiement {$paiement->id}");
-
-            return [
-                'success' => true,
-                'message' => 'Paiement initié, veuillez procéder au paiement',
-                'url' => $response['url']
-            ];
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error("Erreur lors de l'initialisation du dépôt pour l'utilisateur {$user->id}", [
-                'error' => $e->getMessage()
-            ]);
-            return [
-                'success' => false,
-                'message' => 'Erreur lors de l\'initialisation du dépôt: ' . $e->getMessage()
-            ];
-        }
+{
+    Log::info("Tentative de dépôt pour l'utilisateur {$user->id}, montant: {$montant}, payeur: {$numeroPayeur}");
+    
+    $config = ConfigPaiement::getConfig();
+    
+    if ($montant < $config->depot_minimum) {
+        Log::warning("Montant inférieur au dépôt minimum ({$config->depot_minimum}) pour l'utilisateur {$user->id}");
+        return [
+            'success' => false,
+            'message' => "Le dépôt minimum est de {$config->depot_minimum} FCFA"
+        ];
     }
+    
+    try {
+        DB::beginTransaction();
+        Log::info("Transaction DB démarrée pour le dépôt de l'utilisateur {$user->id}");
+        
+        // Annuler les anciens paiements en attente
+        $paiementsAnnules = AutoEcolePaiement::where('user_id', $user->id)
+            ->where('type', 'depot')
+            ->where('methode', 'mobile_money')
+            ->where('status', 'en_attente')
+            ->update(['status' => 'annule']);
+        
+        Log::info("Anciens paiements en attente annulés: {$paiementsAnnules}");
+        
+        $soldeAvant = $user->solde;
+        
+        // Créer un paiement en attente
+        $paiement = AutoEcolePaiement::create([
+            'user_id' => $user->id,
+            'type' => 'depot',
+            'methode' => 'mobile_money',
+            'montant' => $montant,
+            'solde_avant' => $soldeAvant,
+            'solde_apres' => $soldeAvant,
+            'reference' => AutoEcolePaiement::genererReference(),
+            'description' => "Dépôt via Mobile Money - {$numeroPayeur}",
+            'status' => 'en_attente'
+        ]);
+        
+        Log::info("Paiement en attente créé: ID {$paiement->id}, reference {$paiement->reference}");
+        
+        // Appel à l'API Money Fusion
+        $apiUrl = 'https://www.pay.moneyfusion.net/ange_raphael/4a7599fc1f39f73d/pay/';
+        $paymentData = [
+            'totalPrice' => $montant,
+            'article' => [['depot' => $montant]],
+            'personal_Info' => [['userId' => $user->id]],
+            'numeroSend' => $numeroPayeur,
+            'nomclient' => $user->nomComplet,
+            'return_url' => 'https://ange-raphael.supahuman.site/api/end_payment',
+            'webhook_url' => 'https://ange-raphael.supahuman.site/api/webhook/payment'
+        ];
+        
+        Log::info('Appel API Money Fusion', ['url' => $apiUrl, 'data' => $paymentData]);
+        
+        $response = Http::post($apiUrl, $paymentData);
+        
+        Log::info('Réponse API Money Fusion', ['response' => $response->json()]);
+        
+        if ($response->failed() || !$response['statut']) {
+            $paiement->status = 'annule';
+            $paiement->save();
+            Log::error('Échec de l\'initialisation du paiement', ['response' => $response->json()]);
+            throw new \Exception($response['message'] ?? 'Échec de l\'initialisation du paiement');
+        }
+        
+        $paiement->token_pay = $response['token'];
+        $paiement->save();
+        
+        DB::commit();
+        Log::info("Transaction DB commitée pour le paiement {$paiement->id}");
+        
+        return [
+            'success' => true,
+            'message' => 'Paiement initié, veuillez procéder au paiement',
+            'url' => $response['url']
+        ];
+        
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error("Erreur lors de l'initialisation du dépôt pour l'utilisateur {$user->id}", [
+            'error' => $e->getMessage()
+        ]);
+        
+        return [
+            'success' => false,
+            'message' => 'Erreur lors de l\'initialisation du dépôt: ' . $e->getMessage()
+        ];
+    }
+}
 
     public function deposerViaCodeCaisse(AutoEcoleUser $user, string $code): array
     {
@@ -447,13 +454,7 @@ class PaiementService
             Log::info("Transaction DB démarrée pour le webhook du paiement {$paiement->id}");
 
             if ($event === 'payin.session.completed') {
-                if ($data['Montant'] != $paiement->montant) {
-                    Log::error("Montant mismatch pour le paiement {$paiement->id}", [
-                        'paiement' => $paiement->montant,
-                        'webhook' => $data['Montant']
-                    ]);
-                    throw new \Exception('Montant mismatch');
-                }
+                
 
                 $soldeApres = $paiement->solde_avant + $paiement->montant;
                 $paiement->status = 'valide';

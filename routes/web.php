@@ -13,6 +13,10 @@ use App\Http\Controllers\Admin\AutoEcole\CodeCaisseController;
 use App\Http\Controllers\Admin\AutoEcole\ConfigController;
 use App\Http\Controllers\ProfileController;
 
+Route::get('/ange-raphael', function () {
+    return view('landing.ange-raphael');
+})->name('landing.ange-raphael');
+
 
 Route::get('/', function () {
     return view('welcome');

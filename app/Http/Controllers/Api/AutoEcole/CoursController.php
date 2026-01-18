@@ -69,4 +69,53 @@ class CoursController extends Controller
             'pret_pour_examen' => $this->coursService->estPretPourExamen($user)
         ]);
     }
+
+    public function getQuizByChapitre(Request $request, int $chapitreId): JsonResponse
+{
+    // Trouver le quiz actif du chapitre
+    $quiz = \App\Models\Quiz::where('chapitre_id', $chapitreId)
+                ->where('active', true)
+                ->first();
+    
+    if (!$quiz) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Quiz non trouvé pour ce chapitre'
+        ], 404);
+    }
+    
+    // Utiliser le service existant avec l'ID du quiz
+    $result = $this->coursService->getQuiz($request->user(), $quiz->id);
+    return response()->json($result, $result['success'] ? 200 : 403);
+}
+
+public function soumettreQuizByChapitre(Request $request, int $chapitreId): JsonResponse
+{
+    // Trouver le quiz actif du chapitre
+    $quiz = \App\Models\Quiz::where('chapitre_id', $chapitreId)
+                ->where('active', true)
+                ->first();
+    
+    if (!$quiz) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Quiz non trouvé pour ce chapitre'
+        ], 404);
+    }
+    
+    // Valider les réponses
+    $validated = $request->validate([
+        'reponses' => 'required|array'
+    ]);
+    
+    // Utiliser le service existant avec l'ID du quiz
+    $result = $this->coursService->soumettreQuiz(
+        $request->user(),
+        $quiz->id,
+        $validated['reponses']
+    );
+    
+    return response()->json($result, $result['success'] ? 200 : 422);
+}
+
 }

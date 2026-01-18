@@ -45,16 +45,57 @@ class AuthController extends Controller
     }
 
     public function connexion(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'telephone' => 'required|string',
-            'password' => 'required|string'
-        ]);
+{
+    Log::info('=== TENTATIVE DE CONNEXION ===', [
+        'ip' => $request->ip(),
+        'user_agent' => $request->userAgent()
+    ]);
 
-        $result = $this->authService->connexion($validated['telephone'], $validated['password']);
+    $validated = $request->validate([
+        'telephone' => 'required|string',
+        'password' => 'required|string'
+    ]);
+
+    Log::info('Données de connexion reçues', [
+        'telephone' => $validated['telephone'],
+        'password_length' => strlen($validated['password']),
+        'password_empty' => empty($validated['password'])
+    ]);
+
+    try {
+        $result = $this->authService->connexion(
+            $validated['telephone'], 
+            $validated['password']
+        );
+
+        if ($result['success']) {
+            Log::info('✓ Connexion réussie', [
+                'telephone' => $validated['telephone'],
+                'user_id' => $result['user']['id'] ?? 'N/A'
+            ]);
+        } else {
+            Log::warning('✗ Échec de connexion', [
+                'telephone' => $validated['telephone'],
+                'raison' => $result['message'] ?? 'Inconnue',
+                'details' => $result
+            ]);
+        }
 
         return response()->json($result, $result['success'] ? 200 : 401);
+
+    } catch (\Exception $e) {
+        Log::error('ERREUR lors de la connexion', [
+            'telephone' => $validated['telephone'],
+            'exception' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur serveur lors de la connexion'
+        ], 500);
     }
+}
 
     public function deconnexion(Request $request): JsonResponse
     {

@@ -101,11 +101,9 @@ Route::get('/cours/lecon/{id}', [CoursController::class, 'getLecon']);
 // Marquer une leçon comme terminée
 Route::post('/cours/lecon/{id}/terminer', [CoursController::class, 'marquerLeconTerminee']);
 
-// Récupérer un quiz lié à un chapitre
-Route::get('/cours/chapitre/{id}/quiz', [CoursController::class, 'getQuiz']);
+Route::get('/cours/chapitre/{chapitreId}/quiz', [CoursController::class, 'getQuizByChapitre']);
+Route::post('/cours/chapitre/{chapitreId}/quiz', [CoursController::class, 'soumettreQuizByChapitre']);
 
-// Soumettre un quiz
-Route::post('/cours/chapitre/{id}/quiz', [CoursController::class, 'soumettreQuiz']);
 
 // Progression globale (théorique + pratique + examen)
 Route::get('/cours/progression', [CoursController::class, 'getProgression']);
