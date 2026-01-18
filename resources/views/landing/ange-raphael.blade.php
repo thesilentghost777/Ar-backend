@@ -117,6 +117,16 @@
             0% { transform: translateX(-100%) rotate(45deg); }
             100% { transform: translateX(100%) rotate(45deg); }
         }
+
+        /* Mobile menu styles */
+        #mobileMenu {
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        #mobileMenu.active {
+            transform: translateX(0);
+        }
     </style>
 </head>
 <body class="bg-ange-dark text-white overflow-x-hidden">
@@ -137,109 +147,139 @@
 
     <!-- Navbar -->
     <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
             <div class="flex items-center justify-between">
-                <a href="#" class="flex items-center gap-3">
-                    <div class="w-12 h-12 bg-gradient-to-br from-ange-accent to-ange-gold rounded-xl flex items-center justify-center shadow-lg pulse-glow">
-                        <span class="text-2xl">🚗</span>
+                <a href="#" class="flex items-center gap-2 sm:gap-3">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-ange-accent to-ange-gold rounded-xl flex items-center justify-center shadow-lg pulse-glow">
+                        <span class="text-xl sm:text-2xl">🚗</span>
                     </div>
-                    <p class="text-xl font-bold">Ange Raphael</p>
+                    <p class="text-lg sm:text-xl font-bold">Ange Raphael</p>
                 </a>
+                
+                <!-- Desktop menu -->
                 <div class="hidden md:flex items-center gap-8">
                     <a href="#accueil" class="text-white/80 hover:text-ange-accent transition-colors">Accueil</a>
                     <a href="#fonctionnalites" class="text-white/80 hover:text-ange-accent transition-colors">Fonctionnalités</a>
                     <a href="#parrainage" class="text-white/80 hover:text-ange-accent transition-colors">Parrainage</a>
                     <a href="#tarifs" class="text-white/80 hover:text-ange-accent transition-colors">Tarifs</a>
                 </div>
-                <a href="https://play.google.com/store/apps/details?id=com.anonymous.angeraphael" target="_blank" class="bg-gradient-to-r from-ange-accent to-ange-gold text-ange-dark px-6 py-3 rounded-full font-semibold hover:shadow-lg hover:shadow-ange-accent/30 transition-all">
+                
+                <!-- Mobile & Desktop CTA -->
+                <a href="https://play.google.com/store/apps/details?id=com.anonymous.angeraphael" target="_blank" class="hidden sm:inline-block bg-gradient-to-r from-ange-accent to-ange-gold text-ange-dark px-4 sm:px-6 py-2 sm:py-3 rounded-full font-semibold text-sm sm:text-base hover:shadow-lg hover:shadow-ange-accent/30 transition-all">
                     Télécharger
                 </a>
+                
+                <!-- Mobile menu button -->
+                <button id="mobileMenuBtn" class="md:hidden w-10 h-10 flex items-center justify-center rounded-lg glass">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
             </div>
         </div>
     </nav>
 
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="fixed top-0 right-0 bottom-0 w-64 bg-ange-primary/95 backdrop-blur-xl z-[60] md:hidden">
+        <div class="p-6">
+            <button id="closeMobileMenu" class="w-10 h-10 flex items-center justify-center rounded-lg glass ml-auto mb-8">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+            <div class="flex flex-col gap-6">
+                <a href="#accueil" class="text-white/80 hover:text-ange-accent transition-colors text-lg mobile-menu-link">Accueil</a>
+                <a href="#fonctionnalites" class="text-white/80 hover:text-ange-accent transition-colors text-lg mobile-menu-link">Fonctionnalités</a>
+                <a href="#parrainage" class="text-white/80 hover:text-ange-accent transition-colors text-lg mobile-menu-link">Parrainage</a>
+                <a href="#tarifs" class="text-white/80 hover:text-ange-accent transition-colors text-lg mobile-menu-link">Tarifs</a>
+                <a href="https://play.google.com/store/apps/details?id=com.anonymous.angeraphael" target="_blank" class="bg-gradient-to-r from-ange-accent to-ange-gold text-ange-dark px-6 py-3 rounded-full font-semibold text-center mt-4">
+                    Télécharger
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- Hero Section -->
-    <section id="accueil" class="min-h-screen hero-gradient relative flex items-center overflow-hidden">
+    <section id="accueil" class="min-h-screen hero-gradient relative flex items-center overflow-hidden pt-20">
         <!-- Decorative elements -->
-        <div class="absolute top-20 right-10 w-72 h-72 bg-ange-accent/10 rounded-full blur-3xl"></div>
-        <div class="absolute bottom-20 left-10 w-96 h-96 bg-ange-gold/5 rounded-full blur-3xl"></div>
+        <div class="absolute top-20 right-10 w-48 h-48 sm:w-72 sm:h-72 bg-ange-accent/10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-20 left-10 w-64 h-64 sm:w-96 sm:h-96 bg-ange-gold/5 rounded-full blur-3xl"></div>
         
         <!-- Road decoration -->
-        <div class="absolute bottom-0 left-0 right-0 h-20 bg-gray-800">
+        <div class="absolute bottom-0 left-0 right-0 h-16 sm:h-20 bg-gray-800">
             <div class="road-line absolute top-1/2 left-0 right-0 -translate-y-1/2"></div>
         </div>
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 relative z-10">
-            <div class="grid lg:grid-cols-2 gap-12 items-center">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-32 relative z-10">
+            <div class="grid lg:grid-cols-2 gap-8 sm:gap-12 items-center">
                 <div data-aos="fade-right">
-                    <div class="inline-flex items-center gap-2 glass px-4 py-2 rounded-full mb-6">
+                    <div class="inline-flex items-center gap-2 glass px-3 sm:px-4 py-2 rounded-full mb-4 sm:mb-6 text-xs sm:text-sm">
                         <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                        <span class="text-sm">Permis A & B disponibles</span>
+                        <span>Permis A & B disponibles</span>
                     </div>
-                    <h1 class="text-5xl md:text-7xl font-black mb-6 leading-tight">
+                    <h1 class="text-4xl sm:text-5xl md:text-7xl font-black mb-4 sm:mb-6 leading-tight">
                         Votre permis<br>
                         <span class="gradient-text">GRATUITEMENT</span>
                     </h1>
-                    <p class="text-xl text-white/70 mb-8 leading-relaxed">
+                    <p class="text-base sm:text-xl text-white/70 mb-6 sm:mb-8 leading-relaxed">
                         La première auto-école camerounaise avec un système de parrainage révolutionnaire. 
                         Parrainez et obtenez votre permis sans débourser un seul franc!
                     </p>
-                    <div class="flex flex-wrap gap-4 mb-10">
-                        <a href="https://play.google.com/store/apps/details?id=com.anonymous.angeraphael" target="_blank" class="group bg-gradient-to-r from-ange-accent to-ange-gold text-ange-dark px-8 py-4 rounded-full font-bold text-lg hover:shadow-2xl hover:shadow-ange-accent/40 transition-all flex items-center gap-3">
-                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.5,12.92 20.16,13.19L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z"/></svg>
-                            Télécharger l'app
+                    <div class="flex flex-wrap gap-3 sm:gap-4 mb-6 sm:mb-10">
+                        <a href="https://play.google.com/store/apps/details?id=com.anonymous.angeraphael" target="_blank" class="group bg-gradient-to-r from-ange-accent to-ange-gold text-ange-dark px-6 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg hover:shadow-2xl hover:shadow-ange-accent/40 transition-all flex items-center gap-2 sm:gap-3">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.5,12.92 20.16,13.19L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z"/></svg>
+                            <span class="hidden sm:inline">Télécharger l'app</span>
+                            <span class="sm:hidden">Télécharger</span>
                             <span class="group-hover:translate-x-1 transition-transform">→</span>
                         </a>
                     </div>
-                    <div class="flex items-center gap-8">
+                    <div class="grid grid-cols-3 gap-3 sm:gap-8 max-w-md">
                         <div class="text-center">
-                            <p class="text-3xl font-bold gradient-text">4</p>
-                            <p class="text-white/60 text-sm">Niveaux de parrainage</p>
+                            <p class="text-2xl sm:text-3xl font-bold gradient-text">4</p>
+                            <p class="text-white/60 text-xs sm:text-sm">Niveaux</p>
                         </div>
-                        <div class="w-px h-12 bg-white/20"></div>
                         <div class="text-center">
-                            <p class="text-3xl font-bold gradient-text">100%</p>
-                            <p class="text-white/60 text-sm">Gratuit possible</p>
+                            <p class="text-2xl sm:text-3xl font-bold gradient-text">100%</p>
+                            <p class="text-white/60 text-xs sm:text-sm">Gratuit</p>
                         </div>
-                        <div class="w-px h-12 bg-white/20"></div>
                         <div class="text-center">
-                            <p class="text-3xl font-bold gradient-text">A & B</p>
-                            <p class="text-white/60 text-sm">Permis disponibles</p>
+                            <p class="text-2xl sm:text-3xl font-bold gradient-text">A & B</p>
+                            <p class="text-white/60 text-xs sm:text-sm">Permis</p>
                         </div>
                     </div>
                 </div>
-                <div data-aos="fade-left" class="relative">
+                <div data-aos="fade-left" class="relative mt-8 lg:mt-0">
                     <div class="float-animation">
-                        <div class="glass rounded-3xl p-8 relative">
-                            <div class="absolute -top-6 -right-6 w-20 h-20 bg-gradient-to-br from-ange-accent to-ange-gold rounded-2xl flex items-center justify-center text-4xl shadow-xl">
+                        <div class="glass rounded-2xl sm:rounded-3xl p-6 sm:p-8 relative">
+                            <div class="absolute -top-4 -right-4 sm:-top-6 sm:-right-6 w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-ange-accent to-ange-gold rounded-2xl flex items-center justify-center text-3xl sm:text-4xl shadow-xl">
                                 🚗
                             </div>
-                            <div class="space-y-6">
-                                <div class="flex items-center gap-4 p-4 bg-white/5 rounded-xl">
-                                    <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center">
-                                        <span class="text-green-400 text-xl">✓</span>
+                            <div class="space-y-4 sm:space-y-6">
+                                <div class="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-white/5 rounded-xl">
+                                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <span class="text-green-400 text-lg sm:text-xl">✓</span>
                                     </div>
                                     <div>
-                                        <p class="font-semibold">Cours théoriques</p>
-                                        <p class="text-white/60 text-sm">Interactifs et dynamiques</p>
+                                        <p class="font-semibold text-sm sm:text-base">Cours théoriques</p>
+                                        <p class="text-white/60 text-xs sm:text-sm">Interactifs et dynamiques</p>
                                     </div>
                                 </div>
-                                <div class="flex items-center gap-4 p-4 bg-white/5 rounded-xl">
-                                    <div class="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center">
-                                        <span class="text-blue-400 text-xl">🎥</span>
+                                <div class="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-white/5 rounded-xl">
+                                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <span class="text-blue-400 text-lg sm:text-xl">🎥</span>
                                     </div>
                                     <div>
-                                        <p class="font-semibold">Cours pratiques vidéo</p>
-                                        <p class="text-white/60 text-sm">Apprenez à votre rythme</p>
+                                        <p class="font-semibold text-sm sm:text-base">Cours pratiques vidéo</p>
+                                        <p class="text-white/60 text-xs sm:text-sm">Apprenez à votre rythme</p>
                                     </div>
                                 </div>
-                                <div class="flex items-center gap-4 p-4 bg-white/5 rounded-xl">
-                                    <div class="w-12 h-12 bg-ange-accent/20 rounded-full flex items-center justify-center">
-                                        <span class="text-ange-accent text-xl">👥</span>
+                                <div class="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-white/5 rounded-xl">
+                                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-ange-accent/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <span class="text-ange-accent text-lg sm:text-xl">👥</span>
                                     </div>
                                     <div>
-                                        <p class="font-semibold">Système de parrainage</p>
-                                        <p class="text-white/60 text-sm">Gagnez en parrainant</p>
+                                        <p class="font-semibold text-sm sm:text-base">Système de parrainage</p>
+                                        <p class="text-white/60 text-xs sm:text-sm">Gagnez en parrainant</p>
                                     </div>
                                 </div>
                             </div>
@@ -251,150 +291,150 @@
     </section>
 
     <!-- Features Section -->
-    <section id="fonctionnalites" class="py-24 bg-gradient-to-b from-ange-dark to-ange-primary/50">
+    <section id="fonctionnalites" class="py-16 sm:py-24 bg-gradient-to-b from-ange-dark to-ange-primary/50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16" data-aos="fade-up">
-                <span class="text-ange-accent font-semibold">Fonctionnalités</span>
-                <h2 class="text-4xl md:text-5xl font-bold mt-3">Tout pour réussir votre permis</h2>
+            <div class="text-center mb-12 sm:mb-16" data-aos="fade-up">
+                <span class="text-ange-accent font-semibold text-sm sm:text-base">Fonctionnalités</span>
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold mt-2 sm:mt-3">Tout pour réussir votre permis</h2>
             </div>
 
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div class="glass rounded-2xl p-8 card-hover" data-aos="fade-up" data-aos-delay="100">
-                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-3xl mb-6">
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                <div class="glass rounded-2xl p-6 sm:p-8 card-hover" data-aos="fade-up" data-aos-delay="100">
+                    <div class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl mb-4 sm:mb-6">
                         📚
                     </div>
-                    <h3 class="text-xl font-bold mb-3">Cours Théoriques</h3>
-                    <p class="text-white/70">Cours interactifs avec images et animations. Accédez via WebView à du contenu riche et dynamique.</p>
+                    <h3 class="text-lg sm:text-xl font-bold mb-2 sm:mb-3">Cours Théoriques</h3>
+                    <p class="text-white/70 text-sm sm:text-base">Cours interactifs avec images et animations. Accédez via WebView à du contenu riche et dynamique.</p>
                 </div>
 
-                <div class="glass rounded-2xl p-8 card-hover" data-aos="fade-up" data-aos-delay="200">
-                    <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center text-3xl mb-6">
+                <div class="glass rounded-2xl p-6 sm:p-8 card-hover" data-aos="fade-up" data-aos-delay="200">
+                    <div class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl mb-4 sm:mb-6">
                         🎬
                     </div>
-                    <h3 class="text-xl font-bold mb-3">Cours Pratiques Vidéo</h3>
-                    <p class="text-white/70">Vidéos explicatives avec lecteur natif intégré. Apprenez les techniques de conduite pas à pas.</p>
+                    <h3 class="text-lg sm:text-xl font-bold mb-2 sm:mb-3">Cours Pratiques Vidéo</h3>
+                    <p class="text-white/70 text-sm sm:text-base">Vidéos explicatives avec lecteur natif intégré. Apprenez les techniques de conduite pas à pas.</p>
                 </div>
 
-                <div class="glass rounded-2xl p-8 card-hover" data-aos="fade-up" data-aos-delay="300">
-                    <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center text-3xl mb-6">
+                <div class="glass rounded-2xl p-6 sm:p-8 card-hover" data-aos="fade-up" data-aos-delay="300">
+                    <div class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl mb-4 sm:mb-6">
                         ✅
                     </div>
-                    <h3 class="text-xl font-bold mb-3">Quiz Évaluatifs</h3>
-                    <p class="text-white/70">QCM et Vrai/Faux à la fin de chaque chapitre. Obtenez 12/20 minimum pour progresser.</p>
+                    <h3 class="text-lg sm:text-xl font-bold mb-2 sm:mb-3">Quiz Évaluatifs</h3>
+                    <p class="text-white/70 text-sm sm:text-base">QCM et Vrai/Faux à la fin de chaque chapitre. Obtenez 12/20 minimum pour progresser.</p>
                 </div>
 
-                <div class="glass rounded-2xl p-8 card-hover" data-aos="fade-up" data-aos-delay="400">
-                    <div class="w-16 h-16 bg-gradient-to-br from-ange-accent to-ange-gold rounded-2xl flex items-center justify-center text-3xl mb-6">
+                <div class="glass rounded-2xl p-6 sm:p-8 card-hover" data-aos="fade-up" data-aos-delay="400">
+                    <div class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-ange-accent to-ange-gold rounded-2xl flex items-center justify-center text-2xl sm:text-3xl mb-4 sm:mb-6">
                         👥
                     </div>
-                    <h3 class="text-xl font-bold mb-3">Parrainage Multi-niveaux</h3>
-                    <p class="text-white/70">4 niveaux de parrainage pour réduire progressivement vos frais jusqu'à 0 FCFA!</p>
+                    <h3 class="text-lg sm:text-xl font-bold mb-2 sm:mb-3">Parrainage Multi-niveaux</h3>
+                    <p class="text-white/70 text-sm sm:text-base">4 niveaux de parrainage pour réduire progressivement vos frais jusqu'à 0 FCFA!</p>
                 </div>
 
-                <div class="glass rounded-2xl p-8 card-hover" data-aos="fade-up" data-aos-delay="500">
-                    <div class="w-16 h-16 bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl flex items-center justify-center text-3xl mb-6">
+                <div class="glass rounded-2xl p-6 sm:p-8 card-hover" data-aos="fade-up" data-aos-delay="500">
+                    <div class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl mb-4 sm:mb-6">
                         💳
                     </div>
-                    <h3 class="text-xl font-bold mb-3">Paiement Flexible</h3>
-                    <p class="text-white/70">Mobile Money, code caisse ou transfert entre utilisateurs. Payez à votre rythme!</p>
+                    <h3 class="text-lg sm:text-xl font-bold mb-2 sm:mb-3">Paiement Flexible</h3>
+                    <p class="text-white/70 text-sm sm:text-base">Mobile Money, code caisse ou transfert entre utilisateurs. Payez à votre rythme!</p>
                 </div>
 
-                <div class="glass rounded-2xl p-8 card-hover" data-aos="fade-up" data-aos-delay="600">
-                    <div class="w-16 h-16 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-2xl flex items-center justify-center text-3xl mb-6">
+                <div class="glass rounded-2xl p-6 sm:p-8 card-hover" data-aos="fade-up" data-aos-delay="600">
+                    <div class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl mb-4 sm:mb-6">
                         📊
                     </div>
-                    <h3 class="text-xl font-bold mb-3">Suivi de Progression</h3>
-                    <p class="text-white/70">Visualisez votre avancement, les deadlines et votre préparation à l'examen en temps réel.</p>
+                    <h3 class="text-lg sm:text-xl font-bold mb-2 sm:mb-3">Suivi de Progression</h3>
+                    <p class="text-white/70 text-sm sm:text-base">Visualisez votre avancement, les deadlines et votre préparation à l'examen en temps réel.</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Referral System Section -->
-    <section id="parrainage" class="py-24 hero-gradient relative overflow-hidden">
+    <section id="parrainage" class="py-16 sm:py-24 hero-gradient relative overflow-hidden">
         <div class="absolute inset-0 opacity-10">
             <div class="absolute top-0 left-0 w-full h-full" style="background-image: radial-gradient(circle at 20% 50%, rgba(245,158,11,0.3) 0%, transparent 50%);"></div>
         </div>
         
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="text-center mb-16" data-aos="fade-up">
-                <span class="text-ange-accent font-semibold">Système révolutionnaire</span>
-                <h2 class="text-4xl md:text-5xl font-bold mt-3">Parrainez et économisez!</h2>
-                <p class="text-white/70 mt-4 max-w-2xl mx-auto">Chaque niveau atteint vous fait économiser sur vos frais. Atteignez le niveau 3 et obtenez votre permis gratuitement!</p>
+            <div class="text-center mb-12 sm:mb-16" data-aos="fade-up">
+                <span class="text-ange-accent font-semibold text-sm sm:text-base">Système révolutionnaire</span>
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold mt-2 sm:mt-3">Parrainez et économisez!</h2>
+                <p class="text-white/70 mt-3 sm:mt-4 max-w-2xl mx-auto text-sm sm:text-base">Chaque niveau atteint vous fait économiser sur vos frais. Atteignez le niveau 3 et obtenez votre permis gratuitement!</p>
             </div>
 
-            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 <!-- Level 0 -->
-                <div class="level-card glass rounded-2xl p-6 border-2 border-white/10 hover:border-ange-accent/50 transition-all" data-aos="fade-up" data-aos-delay="100">
-                    <div class="w-14 h-14 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center text-2xl font-bold mb-4">0</div>
-                    <h3 class="text-lg font-bold mb-2">Niveau 0</h3>
-                    <p class="text-white/60 text-sm mb-4">3 filleuls inscrits</p>
+                <div class="level-card glass rounded-xl sm:rounded-2xl p-5 sm:p-6 border-2 border-white/10 hover:border-ange-accent/50 transition-all" data-aos="fade-up" data-aos-delay="100">
+                    <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center text-xl sm:text-2xl font-bold mb-3 sm:mb-4">0</div>
+                    <h3 class="text-base sm:text-lg font-bold mb-1 sm:mb-2">Niveau 0</h3>
+                    <p class="text-white/60 text-xs sm:text-sm mb-3 sm:mb-4">3 filleuls inscrits</p>
                     <div class="space-y-2">
-                        <div class="flex items-center gap-2 text-sm">
-                            <span class="text-green-400">✓</span>
-                            <span class="line-through text-white/40">40 000 FCFA Formation</span>
+                        <div class="flex items-center gap-2 text-xs sm:text-sm">
+                            <span class="text-green-400 flex-shrink-0">✓</span>
+                            <span class="line-through text-white/40">40 000 Formation</span>
                         </div>
-                        <div class="flex items-center gap-2 text-sm text-white/70">
-                            <span class="text-ange-accent">→</span>
-                            <span>Reste: 52 500 FCFA</span>
+                        <div class="flex items-center gap-2 text-xs sm:text-sm text-white/70">
+                            <span class="text-ange-accent flex-shrink-0">→</span>
+                            <span>52 500 FCFA</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Level 1 -->
-                <div class="level-card glass rounded-2xl p-6 border-2 border-white/10 hover:border-ange-accent/50 transition-all" data-aos="fade-up" data-aos-delay="200">
-                    <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-2xl font-bold mb-4">1</div>
-                    <h3 class="text-lg font-bold mb-2">Niveau 1</h3>
-                    <p class="text-white/60 text-sm mb-4">3 filleuls avec dépôt</p>
+                <div class="level-card glass rounded-xl sm:rounded-2xl p-5 sm:p-6 border-2 border-white/10 hover:border-ange-accent/50 transition-all" data-aos="fade-up" data-aos-delay="200">
+                    <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-xl sm:text-2xl font-bold mb-3 sm:mb-4">1</div>
+                    <h3 class="text-base sm:text-lg font-bold mb-1 sm:mb-2">Niveau 1</h3>
+                    <p class="text-white/60 text-xs sm:text-sm mb-3 sm:mb-4">3 filleuls avec dépôt</p>
                     <div class="space-y-2">
-                        <div class="flex items-center gap-2 text-sm">
-                            <span class="text-green-400">✓</span>
-                            <span class="line-through text-white/40">40 000 + 10 000 FCFA</span>
+                        <div class="flex items-center gap-2 text-xs sm:text-sm">
+                            <span class="text-green-400 flex-shrink-0">✓</span>
+                            <span class="line-through text-white/40">+ 10 000 FCFA</span>
                         </div>
-                        <div class="flex items-center gap-2 text-sm text-white/70">
-                            <span class="text-ange-accent">→</span>
-                            <span>Reste: 42 500 FCFA</span>
+                        <div class="flex items-center gap-2 text-xs sm:text-sm text-white/70">
+                            <span class="text-ange-accent flex-shrink-0">→</span>
+                            <span>42 500 FCFA</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Level 2 -->
-                <div class="level-card glass rounded-2xl p-6 border-2 border-white/10 hover:border-ange-accent/50 transition-all" data-aos="fade-up" data-aos-delay="300">
-                    <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center text-2xl font-bold mb-4">2</div>
-                    <h3 class="text-lg font-bold mb-2">Niveau 2</h3>
-                    <p class="text-white/60 text-sm mb-4">3 filleuls niveau 1+</p>
+                <div class="level-card glass rounded-xl sm:rounded-2xl p-5 sm:p-6 border-2 border-white/10 hover:border-ange-accent/50 transition-all" data-aos="fade-up" data-aos-delay="300">
+                    <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center text-xl sm:text-2xl font-bold mb-3 sm:mb-4">2</div>
+                    <h3 class="text-base sm:text-lg font-bold mb-1 sm:mb-2">Niveau 2</h3>
+                    <p class="text-white/60 text-xs sm:text-sm mb-3 sm:mb-4">3 filleuls niveau 1+</p>
                     <div class="space-y-2">
-                        <div class="flex items-center gap-2 text-sm">
-                            <span class="text-green-400">✓</span>
-                            <span class="line-through text-white/40">+ 12 500 FCFA Examen blanc</span>
+                        <div class="flex items-center gap-2 text-xs sm:text-sm">
+                            <span class="text-green-400 flex-shrink-0">✓</span>
+                            <span class="line-through text-white/40">+ 12 500 Examen</span>
                         </div>
-                        <div class="flex items-center gap-2 text-sm text-white/70">
-                            <span class="text-ange-accent">→</span>
-                            <span>Reste: 30 000 FCFA</span>
+                        <div class="flex items-center gap-2 text-xs sm:text-sm text-white/70">
+                            <span class="text-ange-accent flex-shrink-0">→</span>
+                            <span>30 000 FCFA</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Level 3 -->
-                <div class="level-card glass rounded-2xl p-6 border-2 border-ange-accent/50 bg-ange-accent/5" data-aos="fade-up" data-aos-delay="400">
-                    <div class="w-14 h-14 bg-gradient-to-br from-ange-accent to-ange-gold rounded-xl flex items-center justify-center text-2xl font-bold text-ange-dark mb-4">3</div>
-                    <h3 class="text-lg font-bold mb-2 gradient-text">Niveau 3</h3>
-                    <p class="text-white/60 text-sm mb-4">3 filleuls niveau 2+</p>
+                <div class="level-card glass rounded-xl sm:rounded-2xl p-5 sm:p-6 border-2 border-ange-accent/50 bg-ange-accent/5" data-aos="fade-up" data-aos-delay="400">
+                    <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-ange-accent to-ange-gold rounded-xl flex items-center justify-center text-xl sm:text-2xl font-bold text-ange-dark mb-3 sm:mb-4">3</div>
+                    <h3 class="text-base sm:text-lg font-bold mb-1 sm:mb-2 gradient-text">Niveau 3</h3>
+                    <p class="text-white/60 text-xs sm:text-sm mb-3 sm:mb-4">3 filleuls niveau 2+</p>
                     <div class="space-y-2">
-                        <div class="flex items-center gap-2 text-sm">
-                            <span class="text-green-400">✓</span>
-                            <span class="text-green-400 font-bold">TOUT GRATUIT!</span>
+                        <div class="flex items-center gap-2 text-xs sm:text-sm">
+                            <span class="text-green-400 flex-shrink-0">✓</span>
+                            <span class="text-green-400 font-bold">GRATUIT!</span>
                         </div>
-                        <div class="flex items-center gap-2 text-sm text-ange-accent font-bold">
+                        <div class="flex items-center gap-2 text-xs sm:text-sm text-ange-accent font-bold">
                             <span>🎉</span>
-                            <span>Reste: 0 FCFA</span>
+                            <span>0 FCFA</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="mt-12 glass rounded-2xl p-6 max-w-2xl mx-auto text-center" data-aos="fade-up">
-                <p class="text-white/80">
+            <div class="mt-8 sm:mt-12 glass rounded-xl sm:rounded-2xl p-4 sm:p-6 max-w-2xl mx-auto text-center" data-aos="fade-up">
+                <p class="text-white/80 text-sm sm:text-base">
                     <span class="text-ange-accent font-bold">💡 Astuce:</span> 
                     Partagez votre code de parrainage à vos amis et famille. Plus ils progressent, plus vous économisez!
                 </p>
@@ -403,114 +443,152 @@
     </section>
 
     <!-- Pricing Section -->
-    <section id="tarifs" class="py-24 bg-ange-dark">
+    <section id="tarifs" class="py-16 sm:py-24 bg-ange-dark">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16" data-aos="fade-up">
-                <span class="text-ange-accent font-semibold">Tarifs</span>
-                <h2 class="text-4xl md:text-5xl font-bold mt-3">Structure des frais</h2>
-                <p class="text-white/70 mt-4">Tous les frais peuvent être réduits ou annulés via le parrainage!</p>
+            <div class="text-center mb-12 sm:mb-16" data-aos="fade-up">
+                <span class="text-ange-accent font-semibold text-sm sm:text-base">Tarifs</span>
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold mt-2 sm:mt-3">Structure des frais</h2>
+                <p class="text-white/70 mt-3 sm:mt-4 text-sm sm:text-base">Tous les frais peuvent être réduits ou annulés via le parrainage!</p>
             </div>
 
-            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="glass rounded-2xl p-8 text-center card-hover" data-aos="fade-up" data-aos-delay="100">
-                    <div class="text-4xl mb-4">📖</div>
-                    <p class="text-3xl font-bold gradient-text">40 000</p>
-                    <p class="text-white/60">FCFA</p>
-                    <p class="font-semibold mt-4">Frais de Formation</p>
-                    <p class="text-white/50 text-sm mt-2">Accès complet aux cours</p>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div class="glass rounded-xl sm:rounded-2xl p-4 sm:p-8 text-center card-hover" data-aos="fade-up" data-aos-delay="100">
+                    <div class="text-3xl sm:text-4xl mb-2 sm:mb-4">📖</div>
+                    <p class="text-2xl sm:text-3xl font-bold gradient-text">40 000</p>
+                    <p class="text-white/60 text-xs sm:text-base">FCFA</p>
+                    <p class="font-semibold mt-2 sm:mt-4 text-sm sm:text-base">Formation</p>
+                    <p class="text-white/50 text-xs sm:text-sm mt-1 sm:mt-2">Cours complets</p>
                 </div>
 
-                <div class="glass rounded-2xl p-8 text-center card-hover" data-aos="fade-up" data-aos-delay="200">
-                    <div class="text-4xl mb-4">📝</div>
-                    <p class="text-3xl font-bold gradient-text">10 000</p>
-                    <p class="text-white/60">FCFA</p>
-                    <p class="font-semibold mt-4">Inscription</p>
-                    <p class="text-white/50 text-sm mt-2">Frais d'inscription officielle</p>
+                <div class="glass rounded-xl sm:rounded-2xl p-4 sm:p-8 text-center card-hover" data-aos="fade-up" data-aos-delay="200">
+                    <div class="text-3xl sm:text-4xl mb-2 sm:mb-4">📝</div>
+                    <p class="text-2xl sm:text-3xl font-bold gradient-text">10 000</p>
+                    <p class="text-white/60 text-xs sm:text-base">FCFA</p>
+                    <p class="font-semibold mt-2 sm:mt-4 text-sm sm:text-base">Inscription</p>
+                    <p class="text-white/50 text-xs sm:text-sm mt-1 sm:mt-2">Frais officiels</p>
                 </div>
 
-                <div class="glass rounded-2xl p-8 text-center card-hover" data-aos="fade-up" data-aos-delay="300">
-                    <div class="text-4xl mb-4">🎯</div>
-                    <p class="text-3xl font-bold gradient-text">12 500</p>
-                    <p class="text-white/60">FCFA</p>
-                    <p class="font-semibold mt-4">Examen Blanc</p>
-                    <p class="text-white/50 text-sm mt-2">Préparation à l'examen</p>
+                <div class="glass rounded-xl sm:rounded-2xl p-4 sm:p-8 text-center card-hover" data-aos="fade-up" data-aos-delay="300">
+                    <div class="text-3xl sm:text-4xl mb-2 sm:mb-4">🎯</div>
+                    <p class="text-2xl sm:text-3xl font-bold gradient-text">12 500</p>
+                    <p class="text-white/60 text-xs sm:text-base">FCFA</p>
+                    <p class="font-semibold mt-2 sm:mt-4 text-sm sm:text-base">Examen Blanc</p>
+                    <p class="text-white/50 text-xs sm:text-sm mt-1 sm:mt-2">Préparation</p>
                 </div>
 
-                <div class="glass rounded-2xl p-8 text-center card-hover" data-aos="fade-up" data-aos-delay="400">
-                    <div class="text-4xl mb-4">🏆</div>
-                    <p class="text-3xl font-bold gradient-text">30 000</p>
-                    <p class="text-white/60">FCFA</p>
-                    <p class="font-semibold mt-4">Frais d'Examen</p>
-                    <p class="text-white/50 text-sm mt-2">Examen officiel national</p>
+                <div class="glass rounded-xl sm:rounded-2xl p-4 sm:p-8 text-center card-hover" data-aos="fade-up" data-aos-delay="400">
+                    <div class="text-3xl sm:text-4xl mb-2 sm:mb-4">🏆</div>
+                    <p class="text-2xl sm:text-3xl font-bold gradient-text">30 000</p>
+                    <p class="text-white/60 text-xs sm:text-base">FCFA</p>
+                    <p class="font-semibold mt-2 sm:mt-4 text-sm sm:text-base">Examen</p>
+                    <p class="text-white/50 text-xs sm:text-sm mt-1 sm:mt-2">Officiel national</p>
                 </div>
             </div>
 
-            <div class="mt-12 text-center" data-aos="fade-up">
-                <div class="inline-flex items-center gap-3 glass px-6 py-3 rounded-full">
-                    <span class="text-2xl">💰</span>
-                    <span class="font-semibold">Total standard: <span class="gradient-text">92 500 FCFA</span></span>
-                    <span class="text-white/40">|</span>
-                    <span class="font-semibold">Avec parrainage niveau 3: <span class="text-green-400">0 FCFA</span></span>
+            <div class="mt-8 sm:mt-12 text-center" data-aos="fade-up">
+                <div class="inline-flex flex-col sm:flex-row items-center gap-2 sm:gap-3 glass px-4 sm:px-6 py-3 rounded-full text-xs sm:text-base">
+                    <span class="text-xl sm:text-2xl">💰</span>
+                    <span class="font-semibold">Total: <span class="gradient-text">92 500 FCFA</span></span>
+                    <span class="text-white/40 hidden sm:inline">|</span>
+                    <span class="font-semibold">Niveau 3: <span class="text-green-400">0 FCFA</span></span>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- CTA Section -->
-    <section class="py-24 hero-gradient relative overflow-hidden">
+    <section class="py-16 sm:py-24 hero-gradient relative overflow-hidden">
         <div class="absolute inset-0">
-            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-ange-accent/5 rounded-full blur-3xl"></div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[800px] h-[600px] sm:h-[800px] bg-ange-accent/5 rounded-full blur-3xl"></div>
         </div>
         
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10" data-aos="fade-up">
-            <h2 class="text-4xl md:text-5xl font-bold mb-6">Prêt à prendre le volant?</h2>
-            <p class="text-xl text-white/70 mb-10">Rejoignez Ange Raphael et obtenez votre permis de conduire facilement!</p>
+            <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6">Prêt à prendre le volant?</h2>
+            <p class="text-base sm:text-xl text-white/70 mb-8 sm:mb-10">Rejoignez Ange Raphael et obtenez votre permis de conduire facilement!</p>
             
-            <a href="https://play.google.com/store/apps/details?id=com.anonymous.angeraphael" target="_blank" class="inline-flex items-center gap-3 bg-gradient-to-r from-ange-accent to-ange-gold text-ange-dark px-10 py-5 rounded-full font-bold text-xl hover:shadow-2xl hover:shadow-ange-accent/40 transition-all pulse-glow">
-                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.5,12.92 20.16,13.19L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z"/></svg>
-                Télécharger l'application
+            <a href="https://play.google.com/store/apps/details?id=com.anonymous.angeraphael" target="_blank" class="inline-flex items-center gap-2 sm:gap-3 bg-gradient-to-r from-ange-accent to-ange-gold text-ange-dark px-8 sm:px-10 py-4 sm:py-5 rounded-full font-bold text-lg sm:text-xl hover:shadow-2xl hover:shadow-ange-accent/40 transition-all pulse-glow">
+                <svg class="w-6 h-6 sm:w-8 sm:h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.5,12.92 20.16,13.19L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z"/></svg>
+                <span class="hidden sm:inline">Télécharger l'application</span>
+                <span class="sm:hidden">Télécharger</span>
             </a>
 
-            <div class="mt-12 flex flex-wrap justify-center gap-8">
-                <a href="https://wa.me/237696087354" class="glass rounded-2xl p-6 hover:bg-ange-accent/10 transition-colors">
-                    <span class="text-2xl">📱</span>
-                    <p class="font-semibold mt-2">+237 696 087 354</p>
+            <div class="mt-8 sm:mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-8 max-w-3xl mx-auto">
+                <a href="https://wa.me/237696087354" class="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-ange-accent/10 transition-colors">
+                    <span class="text-xl sm:text-2xl">📱</span>
+                    <p class="font-semibold mt-2 text-sm sm:text-base">+237 696 087 354</p>
                 </a>
-                <a href="mailto:tsf237@gmail.com" class="glass rounded-2xl p-6 hover:bg-ange-accent/10 transition-colors">
-                    <span class="text-2xl">✉️</span>
-                    <p class="font-semibold mt-2">tsf237@gmail.com</p>
+                <a href="mailto:tsf237@gmail.com" class="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-ange-accent/10 transition-colors">
+                    <span class="text-xl sm:text-2xl">✉️</span>
+                    <p class="font-semibold mt-2 text-sm sm:text-base break-all">tsf237@gmail.com</p>
                 </a>
-                <a href="https://techforgesolution237.site" target="_blank" class="glass rounded-2xl p-6 hover:bg-ange-accent/10 transition-colors">
-                    <span class="text-2xl">🌐</span>
-                    <p class="font-semibold mt-2">techforgesolution237.site</p>
+                <a href="https://techforgesolution237.site" target="_blank" class="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-ange-accent/10 transition-colors">
+                    <span class="text-xl sm:text-2xl">🌐</span>
+                    <p class="font-semibold mt-2 text-sm sm:text-base break-all">techforgesolution237.site</p>
                 </a>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer class="py-8 bg-ange-dark border-t border-white/10">
+    <footer class="py-6 sm:py-8 bg-ange-dark border-t border-white/10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div class="flex items-center justify-center gap-3 mb-4">
-                <div class="w-10 h-10 bg-gradient-to-br from-ange-accent to-ange-gold rounded-xl flex items-center justify-center">
-                    <span class="text-xl">🚗</span>
+            <div class="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-ange-accent to-ange-gold rounded-xl flex items-center justify-center">
+                    <span class="text-lg sm:text-xl">🚗</span>
                 </div>
-                <span class="font-bold text-xl">Ange Raphael</span>
+                <span class="font-bold text-lg sm:text-xl">Ange Raphael</span>
             </div>
-            <p class="text-white/60">© 2026 Auto-École Ange Raphael. Powered By <a href="https://techforgesolution237.site" target="_blank" class="text-ange-accent hover:underline">TFS237</a></p>
+            <p class="text-white/60 text-xs sm:text-base">© 2026 Auto-École Ange Raphael. Powered By <a href="https://techforgesolution237.site" target="_blank" class="text-ange-accent hover:underline">TFS237</a></p>
         </div>
     </footer>
 
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
+        // Preloader
         window.addEventListener('load', () => { 
             document.getElementById('preloader').style.opacity = '0'; 
             setTimeout(() => document.getElementById('preloader').style.display = 'none', 500); 
         });
+
+        // AOS initialization
         AOS.init({ duration: 800, once: true, offset: 100 });
+
+        // Navbar scroll effect
         window.addEventListener('scroll', () => { 
-            document.getElementById('navbar').classList.toggle('bg-ange-primary/95', window.pageYOffset > 100); 
-            document.getElementById('navbar').classList.toggle('backdrop-blur-xl', window.pageYOffset > 100); 
+            const navbar = document.getElementById('navbar');
+            if (window.pageYOffset > 100) {
+                navbar.classList.add('bg-ange-primary/95', 'backdrop-blur-xl', 'shadow-lg');
+            } else {
+                navbar.classList.remove('bg-ange-primary/95', 'backdrop-blur-xl', 'shadow-lg');
+            }
+        });
+
+        // Mobile menu functionality
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const closeMobileMenu = document.getElementById('closeMobileMenu');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileMenuLinks = document.querySelectorAll('.mobile-menu-link');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.add('active');
+        });
+
+        closeMobileMenu.addEventListener('click', () => {
+            mobileMenu.classList.remove('active');
+        });
+
+        // Close menu when clicking on a link
+        mobileMenuLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.remove('active');
+            });
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!mobileMenu.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+                mobileMenu.classList.remove('active');
+            }
         });
     </script>
 </body>
