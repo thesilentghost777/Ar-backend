@@ -257,6 +257,11 @@
                     <i class="fas fa-users w-6 text-lg"></i>
                     <span x-show="sidebarOpen" x-transition class="ml-3">Utilisateurs</span>
                 </a>
+                <a href="{{ route('admin.auto-ecole.cni.index') }}"
+                   class="sidebar-link flex items-center px-3 py-2.5 rounded-xl text-gray-700 font-medium text-sm {{ request()->routeIs('admin.auto-ecole.cni.*') ? 'active' : '' }}">
+                    <i class="fas fa-id-card w-6 text-lg"></i>
+                    <span x-show="sidebarOpen" x-transition class="ml-3">CNI Utilisateurs</span>
+                </a>
 
                 <a href="{{ route('admin.auto-ecole.sessions.index') }}"
                    class="sidebar-link flex items-center px-3 py-2.5 rounded-xl text-gray-700 font-medium text-sm {{ request()->routeIs('admin.auto-ecole.sessions.*') ? 'active' : '' }}">

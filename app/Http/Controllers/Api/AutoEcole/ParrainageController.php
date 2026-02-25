@@ -13,26 +13,26 @@ class ParrainageController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $result = $this->parrainageService->getInfoParrainage($request->user());
+        $result = $this->parrainageService->getInfoParrainage($request->user('api'));
         return response()->json($result);
     }
 
     public function getListeFilleuls(Request $request): JsonResponse
     {
-        $result = $this->parrainageService->getListeFilleuls($request->user());
+        $result = $this->parrainageService->getListeFilleuls($request->user('api'));
         return response()->json($result);
     }
 
     public function getMessagePartage(Request $request): JsonResponse
     {
-        $result = $this->parrainageService->getMessagePartage($request->user());
+        $result = $this->parrainageService->getMessagePartage($request->user('api'));
         return response()->json($result);
     }
 
     public function getArbre(Request $request): JsonResponse
     {
         $profondeur = $request->input('profondeur', 3);
-        $result = $this->parrainageService->getArbreParrainage($request->user(), $profondeur);
+        $result = $this->parrainageService->getArbreParrainage($request->user('api'), $profondeur);
         return response()->json($result);
     }
 }

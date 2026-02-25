@@ -18,7 +18,7 @@ class CoursService
     {
         // ✅ Nouveau: Vérifier si l'utilisateur a fait son premier dépôt
         $premierDepotEffectue = $user->premier_depot_at !== null;
-
+        $cours_debloquer = $user->cours_debloques === true;
         $modules = Module::where('type', $type)
             ->where('active', true)
             ->where(function ($query) use ($user) {
@@ -58,7 +58,7 @@ class CoursService
                     }
 
                     // ✅ Nouveau: Si pas de premier dépôt, masquer le contenu mais montrer la structure
-                    if (!$premierDepotEffectue) {
+                    if (!$cours_debloquer) {
                         $lecons[] = [
                             'id' => $lecon->id,
                             'titre' => $lecon->titre,

@@ -163,13 +163,10 @@ class PaiementService
             $estPremierDepot = is_null($user->premier_depot_at);
             if ($estPremierDepot) {
                 $user->premier_depot_at = now();
-                $user->cours_debloques = true;
+                $user->cours_debloques = false;
             }
             $user->save();
-            // Si premier dépôt, vérifier les niveaux du parrain
-            if ($estPremierDepot && $user->parrain_id) {
-                $this->authService->verifierEtMettreAJourNiveauApresDepot($user->parrain_id);
-            }
+           
            
             DB::commit();
             return [
@@ -358,6 +355,8 @@ class PaiementService
                 'status' => 'valide',
                 'frais_type' => $typeFrais
             ]);
+
+            $user->cours_debloques = true;
             // Mettre à jour l'utilisateur
             $user->solde = $soldeApres;
             $user->{$statusField} = 'paye';
@@ -468,16 +467,12 @@ class PaiementService
                 $estPremierDepot = is_null($user->premier_depot_at);
                 if ($estPremierDepot) {
                     $user->premier_depot_at = now();
-                    $user->cours_debloques = true;
+                    $user->cours_debloques = false;
                     Log::info("Premier dépôt de l'utilisateur {$user->id}");
                 }
                 $user->save();
 
-                if ($estPremierDepot && $user->parrain_id) {
-                    $this->authService->verifierEtMettreAJourNiveauApresDepot($user->parrain_id);
-                    
-                    Log::info("Notification envoyée au parrain {$user->parrain_id}");
-                }
+               
 
                
                 Log::info("Notification envoyée à l'utilisateur {$user->id}");

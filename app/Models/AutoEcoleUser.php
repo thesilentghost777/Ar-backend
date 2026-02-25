@@ -166,4 +166,9 @@ class AutoEcoleUser extends Authenticatable
     {
         return $this->lieuxPratique->pluck('nom')->join(', ') ?: 'Aucun';
     }
+
+    public function cni()
+    {
+        return $this->hasOne(UserCni::class, 'user_id');
+    }
 }

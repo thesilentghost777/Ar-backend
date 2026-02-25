@@ -93,9 +93,20 @@
                         <span class="ml-3 text-sm font-medium text-gray-700">{{ $isFrench ?? true ? 'Chapitre actif' : 'Active chapter' }}</span>
                     </label>
                 </div>
-            </div>
+            </div> 
+            <div class="flex space-x-4">
+                    <a href="{{ route('admin.auto-ecole.chapitres.index') }}"
+                       class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition">
+                        {{ $isFrench ?? true ? 'Annuler' : 'Cancel' }}
+                    </a>
+                    <button type="submit" class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
+                        <i class="fas fa-save mr-2"></i>
+                        {{ $isFrench ?? true ? 'Enregistrer' : 'Save' }}
+                    </button>
+                </div>     
+        </form>
 
-            <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+        <div class="flex items-center justify-between pt-6 border-t border-gray-200">
                 <form id="delete-form-{{ $chapitre->id }}"
                       action="{{ route('admin.auto-ecole.chapitres.destroy', $chapitre) }}"
                       method="POST" class="inline">
@@ -109,18 +120,8 @@
                     </button>
                 </form>
 
-                <div class="flex space-x-4">
-                    <a href="{{ route('admin.auto-ecole.chapitres.index') }}"
-                       class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition">
-                        {{ $isFrench ?? true ? 'Annuler' : 'Cancel' }}
-                    </a>
-                    <button type="submit" class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
-                        <i class="fas fa-save mr-2"></i>
-                        {{ $isFrench ?? true ? 'Enregistrer' : 'Save' }}
-                    </button>
-                </div>
+                
             </div>
-        </form>
     </div>
 </div>
 @endsection

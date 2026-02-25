@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\AutoEcole\CoursController;
 use App\Http\Controllers\Api\AutoEcole\ParrainageController;
 use App\Http\Controllers\Api\AutoEcole\SessionController;
 use App\Http\Controllers\Api\AutoEcole\DashboardController;
+use App\Http\Controllers\Api\AutoEcole\CniController;
+use App\Http\Controllers\Admin\CniController2;
 
 //test
 Route::get('/test', function (Request $request) {
@@ -43,6 +45,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profil', [AuthController::class, 'profil']);
     Route::put('/profil/update', [AuthController::class, 'mettreAJourProfil']);
     Route::get('/dashboard', [DashboardController::class, 'index']);
+
+
+    // Statut CNI de l'utilisateur
+Route::get('/cni', [CniController::class, 'index']);
+
+// Upload recto ou verso (multipart/form-data: face, image)
+Route::post('/cni/upload', [CniController::class, 'upload']);
+
+// Supprimer une face
+Route::delete('/cni/{face}', [CniController::class, 'supprimer']);
 
 
     // =============================

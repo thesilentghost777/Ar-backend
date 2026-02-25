@@ -150,4 +150,14 @@
         @endif
     </div>
 </div>
+
+@push('scripts')
+<script>
+    function confirmDelete(formId) {
+        if (confirm('Êtes-vous sûr de vouloir supprimer ce chapitre ?')) {
+            document.getElementById(formId).submit();
+        }
+    }
+</script>
+@endpush
 @endsection

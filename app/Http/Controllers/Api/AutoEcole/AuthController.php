@@ -20,29 +20,70 @@ class AuthController extends Controller
         $this->dashboardService = $dashboardService;
     }
 
-    public function inscription(Request $request): JsonResponse
-    {
+ public function inscription(Request $request): JsonResponse
+{
+    Log::info('Requête inscription reçue', [
+        'ip' => $request->ip(),
+        'user_agent' => $request->userAgent(),
+        'telephone' => $request->input('telephone'),
+        'code_parrainage' => $request->input('code_parrainage'),
+    ]);
+
+    try {
         $validated = $request->validate([
-            'nom' => 'required|string|max:255',
-            'prenom' => 'required|string|max:255',
-            'telephone' => 'required|string|unique:auto_ecole_users,telephone',
-            'password' => 'required|string|min:6|confirmed',
+            'nom'            => 'required|string|max:255',
+            'prenom'         => 'required|string|max:255',
+            'telephone'      => 'required|string|unique:auto_ecole_users,telephone',
+            'password'       => 'required|string|min:6|confirmed',
             'date_naissance' => 'nullable|date',
-            'quartier' => 'nullable|string',
-            'type_permis' => 'required|in:permis_a,permis_b,permis_t',
-            'type_cours' => 'required|in:en_ligne,presentiel,les_deux',
-            'vague' => 'required|in:1,2',
-            'session_id' => 'nullable|exists:sessions1,id',
+            'type_permis'    => 'required|in:permis_a,permis_b,permis_t',
             'centre_examen_id' => 'nullable|exists:centres_examen,id',
-            'code_parrainage' => 'nullable|string',
-            'lieux_pratique' => 'nullable|array',
-            'lieux_pratique.*' => 'exists:lieux_pratique,id'
+            'code_parrainage'  => 'required|string',
+        ]);
+
+        Log::info('Données validées avec succès pour inscription', [
+            'telephone' => $validated['telephone'],
+            'code_parrainage' => $validated['code_parrainage']
         ]);
 
         $result = $this->authService->inscription($validated);
 
-        return response()->json($result, $result['success'] ? 201 : 422);
+        if ($result['success']) {
+            Log::info('Inscription validée et retournée au client', [
+                'user_id' => $result['user']->id ?? null,
+                'code_parrainage' => $result['code_parrainage'] ?? null
+            ]);
+            return response()->json($result, 201);
+        } else {
+            Log::warning('Inscription refusée', [
+                'message' => $result['message'],
+                'telephone' => $validated['telephone'] ?? 'inconnu'
+            ]);
+            return response()->json($result, 422);
+        }
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        Log::warning('Échec validation inscription', [
+            'errors' => $e->errors(),
+            'telephone' => $request->input('telephone')
+        ]);
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation échouée',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        Log::error('Erreur inattendue lors de l\'inscription (contrôleur)', [
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'telephone' => $request->input('telephone')
+        ]);
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur serveur lors de l\'inscription'
+        ], 500);
     }
+}
 
     public function connexion(Request $request): JsonResponse
 {

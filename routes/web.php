@@ -12,6 +12,8 @@ use App\Http\Controllers\Admin\AutoEcole\PaiementController;
 use App\Http\Controllers\Admin\AutoEcole\CodeCaisseController;
 use App\Http\Controllers\Admin\AutoEcole\ConfigController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\AutoEcole\CniController;
+
 
 Route::get('/ange-raphael', function () {
     return view('landing.ange-raphael');
@@ -36,6 +38,25 @@ Route::delete('/profile', [ProfileController::class, 'destroy'])
     ->name('profile.destroy');
 
 Route::prefix('admin/auto-ecole')->name('admin.auto-ecole.')->middleware(['web', 'auth'])->group(function () {
+
+    Route::get('cni', [CniController::class, 'index'])->name('cni.index');
+
+    // Détail CNI d'un apprenant (voir les deux images + changer statut)
+    Route::get('cni/{user}', [CniController::class, 'show'])->name('cni.show');
+
+    // Valider la CNI
+    Route::post('cni/{user}/valider', [CniController::class, 'valider'])->name('cni.valider');
+
+    // Rejeter la CNI (avec motif)
+    Route::post('cni/{user}/rejeter', [CniController::class, 'rejeter'])->name('cni.rejeter');
+
+    // Remettre en attente
+    Route::post('cni/{user}/en-attente', [CniController::class, 'enAttente'])->name('cni.en-attente');
+
+    // (Optionnel) Mise à jour via AJAX
+    Route::patch('cni/{user}/statut', [CniController::class, 'updateStatut'])->name('cni.update-statut');
+
+
 
     // Utilisateurs
     Route::resource('users', UserController::class)->except(['create', 'store']);
