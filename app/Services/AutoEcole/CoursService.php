@@ -327,114 +327,116 @@ class CoursService
     }
 
     public function soumettreQuiz(AutoEcoleUser $user, int $quizId, array $reponses): array
-    {
-        // ✅ Vérifier le premier dépôt
-        if (!$user->premier_depot_at) {
-            return [
-                'success' => false,
-                'message' => 'Effectuez un premier dépôt pour passer les quiz'
-            ];
-        }
+{
+    // ✅ Vérifier le premier dépôt
+    if (!$user->premier_depot_at) {
+        return [
+            'success' => false,
+            'message' => 'Effectuez un premier dépôt pour passer les quiz'
+        ];
+    }
 
-        $quiz = Quiz::with(['questions.reponses', 'chapitre.module'])->find($quizId);
+    $quiz = Quiz::with(['questions.reponses', 'chapitre.module'])->find($quizId);
 
-        if (!$quiz) {
-            return [
-                'success' => false,
-                'message' => 'Quiz non trouvé'
-            ];
-        }
+    if (!$quiz) {
+        return [
+            'success' => false,
+            'message' => 'Quiz non trouvé'
+        ];
+    }
 
-        try {
-            DB::beginTransaction();
+    try {
+        DB::beginTransaction();
 
-            $totalPoints = 0;
-            $pointsObtenus = 0;
-            $corrections = [];
+        $totalPoints = 0;
+        $pointsObtenus = 0;
+        $corrections = [];
 
-            foreach ($quiz->questions as $question) {
-                $totalPoints += $question->points;
-                $reponseUtilisateur = $reponses[$question->id] ?? null;
-                $bonneReponse = $question->reponses->where('est_correcte', true)->first();
+        foreach ($quiz->questions as $question) {
+            $totalPoints += $question->points;
+            $reponseUtilisateur = $reponses[$question->id] ?? null;
+            $bonneReponse = $question->reponses->where('est_correcte', true)->first();
+            $reponseUtilisateurObjet = $question->reponses->where('id', $reponseUtilisateur)->first(); // ✅ Ajout
 
-                $estCorrect = $reponseUtilisateur == $bonneReponse?->id;
-                if ($estCorrect) {
-                    $pointsObtenus += $question->points;
-                }
-
-                $corrections[] = [
-                    'question_id' => $question->id,
-                    'enonce' => $question->enonce,
-                    'reponse_utilisateur' => $reponseUtilisateur,
-                    'bonne_reponse' => $bonneReponse?->id,
-                    'bonne_reponse_texte' => $bonneReponse?->texte,
-                    'est_correct' => $estCorrect,
-                    'explication' => $question->explication,
-                    'points' => $estCorrect ? $question->points : 0
-                ];
+            $estCorrect = $reponseUtilisateur == $bonneReponse?->id;
+            if ($estCorrect) {
+                $pointsObtenus += $question->points;
             }
 
-            // Calculer la note sur 20
-            $note = ($totalPoints > 0) ? round(($pointsObtenus / $totalPoints) * 20, 2) : 0;
-            $reussi = $note >= $quiz->note_passage;
+            $corrections[] = [
+                'question_id' => $question->id,
+                'enonce' => $question->enonce,
+                'reponse_utilisateur' => $reponseUtilisateur,
+                'reponse_utilisateur_texte' => $reponseUtilisateurObjet?->texte, // ✅ Ajout
+                'bonne_reponse' => $bonneReponse?->id,
+                'bonne_reponse_texte' => $bonneReponse?->texte,
+                'est_correct' => $estCorrect,
+                'explication' => $question->explication,
+                'points' => $question->points
+            ];
+        }
 
-            // Compter les tentatives
-            $nbTentatives = ResultatQuiz::where('user_id', $user->id)
-                ->where('quiz_id', $quizId)
-                ->count();
+        // Calculer la note sur 20
+        $note = ($totalPoints > 0) ? round(($pointsObtenus / $totalPoints) * 20, 2) : 0;
+        $reussi = $note >= $quiz->note_passage;
 
-            // Vérifier si l'utilisateur avait déjà réussi
-            $dejaReussi = ResultatQuiz::where('user_id', $user->id)
-                ->where('quiz_id', $quizId)
-                ->where('reussi', true)
-                ->exists();
+        // Compter les tentatives
+        $nbTentatives = ResultatQuiz::where('user_id', $user->id)
+            ->where('quiz_id', $quizId)
+            ->count();
 
-            // Enregistrer le résultat
-            $resultat = ResultatQuiz::create([
-                'user_id' => $user->id,
-                'quiz_id' => $quizId,
+        // Vérifier si l'utilisateur avait déjà réussi
+        $dejaReussi = ResultatQuiz::where('user_id', $user->id)
+            ->where('quiz_id', $quizId)
+            ->where('reussi', true)
+            ->exists();
+
+        // Enregistrer le résultat
+        $resultat = ResultatQuiz::create([
+            'user_id' => $user->id,
+            'quiz_id' => $quizId,
+            'note' => $note,
+            'total_questions' => $quiz->questions->count(),
+            'bonnes_reponses' => collect($corrections)->where('est_correct', true)->count(),
+            'reussi' => $reussi,
+            'reponses_utilisateur' => $reponses,
+            'tentative' => $nbTentatives + 1
+        ]);
+
+        // Notification
+        if ($reussi && !$dejaReussi) {
+            AutoEcoleNotification::envoyer(
+                $user->id,
+                'Quiz réussi!',
+                "Félicitations! Vous avez réussi le quiz \"{$quiz->titre}\" avec {$note}/20",
+                'cours'
+            );
+        }
+
+        DB::commit();
+
+        return [
+            'success' => true,
+            'resultat' => [
                 'note' => $note,
+                'note_passage' => $quiz->note_passage,
+                'reussi' => $reussi,
                 'total_questions' => $quiz->questions->count(),
                 'bonnes_reponses' => collect($corrections)->where('est_correct', true)->count(),
-                'reussi' => $reussi,
-                'reponses_utilisateur' => $reponses,
                 'tentative' => $nbTentatives + 1
-            ]);
+            ],
+            'corrections' => $corrections,
+            'progression_globale' => $this->calculerProgression($user, $quiz->chapitre->module->type)
+        ];
 
-            // Notification
-            if ($reussi && !$dejaReussi) {
-                AutoEcoleNotification::envoyer(
-                    $user->id,
-                    'Quiz réussi!',
-                    "Félicitations! Vous avez réussi le quiz \"{$quiz->titre}\" avec {$note}/20",
-                    'cours'
-                );
-            }
-
-            DB::commit();
-
-            return [
-                'success' => true,
-                'resultat' => [
-                    'note' => $note,
-                    'note_passage' => $quiz->note_passage,
-                    'reussi' => $reussi,
-                    'total_questions' => $quiz->questions->count(),
-                    'bonnes_reponses' => collect($corrections)->where('est_correct', true)->count(),
-                    'tentative' => $nbTentatives + 1
-                ],
-                'corrections' => $corrections,
-                'progression_globale' => $this->calculerProgression($user, $quiz->chapitre->module->type)
-            ];
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return [
-                'success' => false,
-                'message' => 'Erreur lors de la soumission du quiz: ' . $e->getMessage()
-            ];
-        }
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return [
+            'success' => false,
+            'message' => 'Erreur lors de la soumission du quiz: ' . $e->getMessage()
+        ];
     }
+}
 
     public function calculerProgression(AutoEcoleUser $user, string $type = 'theorique'): array
     {
