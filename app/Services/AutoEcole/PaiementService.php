@@ -64,7 +64,7 @@ class PaiementService
         Log::info("Paiement en attente créé: ID {$paiement->id}, reference {$paiement->reference}");
         
         // Appel à l'API Money Fusion
-        $apiUrl = 'https://www.pay.moneyfusion.net/ange_raphael/4a7599fc1f39f73d/pay/';
+        $apiUrl = 'https://www.pay.moneyfusion.net/Elite2_0/32cb4c51bd4a466d/pay/';
         $paymentData = [
             'totalPrice' => $montant,
             'article' => [['depot' => $montant]],
