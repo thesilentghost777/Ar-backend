@@ -517,9 +517,9 @@
                     <span class="text-xl sm:text-2xl">📱</span>
                     <p class="font-semibold mt-2 text-sm sm:text-base">+237 696 087 354</p>
                 </a>
-                <a href="mailto:tsf237@gmail.com" class="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-ange-accent/10 transition-colors">
+                <a href="mailto:contact@techforgesolution237.site" class="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-ange-accent/10 transition-colors">
                     <span class="text-xl sm:text-2xl">✉️</span>
-                    <p class="font-semibold mt-2 text-sm sm:text-base break-all">tsf237@gmail.com</p>
+                    <p class="font-semibold mt-2 text-sm sm:text-base break-all">contact@techforgesolution237.site</p>
                 </a>
                 <a href="https://techforgesolution237.site" target="_blank" class="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-ange-accent/10 transition-colors">
                     <span class="text-xl sm:text-2xl">🌐</span>
