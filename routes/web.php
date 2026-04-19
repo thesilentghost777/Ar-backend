@@ -13,6 +13,17 @@ use App\Http\Controllers\Admin\AutoEcole\CodeCaisseController;
 use App\Http\Controllers\Admin\AutoEcole\ConfigController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\AutoEcole\CniController;
+use App\Http\Controllers\Web\InscriptionController; 
+
+
+
+Route::get('/inscription', [InscriptionController::class, 'index'])
+     ->name('web.inscription');
+
+// Lien de parrainage court : /ref/CODE  →  /inscription?ref=CODE
+Route::get('/ref/{code}', function (string $code) {
+    return redirect()->route('web.inscription', ['ref' => strtoupper($code)]);
+})->name('web.parrainage');
 
 
 Route::get('/ange-raphael', function () {

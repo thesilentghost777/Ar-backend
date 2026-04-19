@@ -10,6 +10,13 @@ use App\Http\Controllers\Api\AutoEcole\DashboardController;
 use App\Http\Controllers\Api\AutoEcole\CniController;
 use App\Http\Controllers\Admin\CniController2;
 
+
+Route::get('/sessions', [SessionController::class, 'index']);
+Route::get('/centres-examen', [SessionController::class, 'centresExamen']);
+Route::get('/jours-pratique', [SessionController::class, 'joursPratique']);
+Route::get('/lieux-pratique', [SessionController::class, 'lieuxPratique']);
+
+
 //test
 Route::get('/test', function (Request $request) {
     return response()->json([
@@ -18,15 +25,22 @@ Route::get('/test', function (Request $request) {
         'timestamp' => now(),
     ]);
 });
+
+
+Route::post('/otp/email/envoyer',  [AuthController::class, 'envoyerOtpEmail']);
+Route::post('/otp/email/verifier', [AuthController::class, 'verifierOtpEmail']);
+
 // Routes publiques
 Route::post('/inscription', [AuthController::class, 'inscription']);
 Route::post('/connexion', [AuthController::class, 'connexion']);
 
-Route::get('/sessions', [SessionController::class, 'index']);
-Route::get('/centres-examen', [SessionController::class, 'centresExamen']);
-Route::get('/jours-pratique', [SessionController::class, 'joursPratique']);
-// Ajout dans le fichier de routes (par exemple, api.php ou un fichier routes dédié)
-Route::get('/lieux-pratique', [SessionController::class, 'lieuxPratique']);
+ // OTP Twilio (NOUVEAU)
+Route::post('/otp/envoyer',  [AuthController::class, 'envoyerOtp']);
+Route::post('/otp/verifier', [AuthController::class, 'verifierOtp']);
+
+// Social login Firebase (NOUVEAU)
+Route::post('/social-login', [AuthController::class, 'socialLogin']);
+
 
 // Code de parrainage par défaut
 Route::get('/code-parrainage-defaut', [AuthController::class, 'codeParrainageDefaut']);
@@ -40,11 +54,11 @@ Route::get('/end_payment', [PaiementController::class, 'endPayment']);
 
 // Routes protégées
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/deconnexion', [AuthController::class, 'deconnexion']);
-    // Profil
-    Route::get('/profil', [AuthController::class, 'profil']);
-    Route::put('/profil/update', [AuthController::class, 'mettreAJourProfil']);
-    Route::get('/dashboard', [DashboardController::class, 'index']);
+    Route::post('/deconnexion',            [AuthController::class, 'deconnexion']);
+        Route::get('/profil',                  [AuthController::class, 'profil']);
+        Route::put('/profil',                  [AuthController::class, 'mettreAJourProfil']);
+        Route::post('/profil/completer',       [AuthController::class, 'completerProfilSocial']); // NOUVEAU
+        Route::get('/dashboard', [DashboardController::class, 'index']);
 
 
     // Statut CNI de l'utilisateur
@@ -134,3 +148,5 @@ Route::get('/cours/progression', [CoursController::class, 'getProgression']);
     Route::get('/parrainage/arbre', [ParrainageController::class, 'getArbre']);
 
 });
+
+

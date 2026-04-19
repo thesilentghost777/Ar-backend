@@ -20,189 +20,189 @@ class AuthController extends Controller
         $this->dashboardService = $dashboardService;
     }
 
- public function inscription(Request $request): JsonResponse
-{
-    Log::info('Requête inscription reçue', [
-        'ip' => $request->ip(),
-        'user_agent' => $request->userAgent(),
-        'telephone' => $request->input('telephone'),
-        'code_parrainage' => $request->input('code_parrainage'),
-    ]);
+    // ──────────────────────────────────────────
+    // Inscription classique (telephone)
+    // ──────────────────────────────────────────
+    public function inscription(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+    'nom'              => 'required|string|max:255',
+    'prenom'           => 'required|string|max:255',
+    'telephone'        => 'required_without:email|nullable|string|unique:auto_ecole_users,telephone',
+    'email'            => 'required_without:telephone|nullable|email|unique:auto_ecole_users,email',
+    'password'         => 'required|string|min:6|confirmed',
+    'date_naissance'   => 'nullable|date',
+    'type_permis'      => 'required|in:permis_a,permis_b,permis_t',
+    'centre_examen_id' => 'nullable|exists:centres_examen,id',
+    'code_parrainage'  => 'required|string',
+]);
 
-    try {
-        $validated = $request->validate([
-            'nom'            => 'required|string|max:255',
-            'prenom'         => 'required|string|max:255',
-            'telephone'      => 'required|string|unique:auto_ecole_users,telephone',
-            'password'       => 'required|string|min:6|confirmed',
-            'date_naissance' => 'nullable|date',
-            'type_permis'    => 'required|in:permis_a,permis_b,permis_t',
-            'centre_examen_id' => 'nullable|exists:centres_examen,id',
-            'code_parrainage'  => 'required|string',
-        ]);
+            $result = $this->authService->inscription($validated);
+            return response()->json($result, $result['success'] ? 201 : 422);
 
-        Log::info('Données validées avec succès pour inscription', [
-            'telephone' => $validated['telephone'],
-            'code_parrainage' => $validated['code_parrainage']
-        ]);
-
-        $result = $this->authService->inscription($validated);
-
-        if ($result['success']) {
-            Log::info('Inscription validée et retournée au client', [
-                'user_id' => $result['user']->id ?? null,
-                'code_parrainage' => $result['code_parrainage'] ?? null
-            ]);
-            return response()->json($result, 201);
-        } else {
-            Log::warning('Inscription refusée', [
-                'message' => $result['message'],
-                'telephone' => $validated['telephone'] ?? 'inconnu'
-            ]);
-            return response()->json($result, 422);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation échouée',
+                'errors'  => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Erreur inscription', ['message' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Erreur serveur'], 500);
         }
-    } catch (\Illuminate\Validation\ValidationException $e) {
-        Log::warning('Échec validation inscription', [
-            'errors' => $e->errors(),
-            'telephone' => $request->input('telephone')
-        ]);
-        return response()->json([
-            'success' => false,
-            'message' => 'Validation échouée',
-            'errors' => $e->errors()
-        ], 422);
-    } catch (\Exception $e) {
-        Log::error('Erreur inattendue lors de l\'inscription (contrôleur)', [
-            'message' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine(),
-            'telephone' => $request->input('telephone')
-        ]);
-        return response()->json([
-            'success' => false,
-            'message' => 'Erreur serveur lors de l\'inscription'
-        ], 500);
     }
+
+    // ──────────────────────────────────────────
+// OTP Email — Envoi (renvoi manuel)
+// ──────────────────────────────────────────
+public function envoyerOtpEmail(Request $request): JsonResponse
+{
+    $request->validate(['email' => 'required|email']);
+
+    $user = \App\Models\AutoEcoleUser::where('email', $request->email)->first();
+    if (!$user) {
+        return response()->json(['success' => false, 'message' => 'Email introuvable'], 404);
+    }
+    if ($user->email_verified) {
+        return response()->json(['success' => false, 'message' => 'Email déjà vérifié'], 422);
+    }
+
+    $result = $this->authService->envoyerOtpEmail($request->email);
+    return response()->json($result, $result['success'] ? 200 : 500);
 }
 
-    public function connexion(Request $request): JsonResponse
+// ──────────────────────────────────────────
+// OTP Email — Vérification
+// ──────────────────────────────────────────
+public function verifierOtpEmail(Request $request): JsonResponse
 {
-    Log::info('=== TENTATIVE DE CONNEXION ===', [
-        'ip' => $request->ip(),
-        'user_agent' => $request->userAgent()
+    $request->validate([
+        'email' => 'required|email',
+        'code'  => 'required|string|size:6',
     ]);
 
-    $validated = $request->validate([
-        'telephone' => 'required|string',
-        'password' => 'required|string'
-    ]);
+    $result = $this->authService->verifierOtpEmail(
+        $request->email,
+        $request->code
+    );
 
-    Log::info('Données de connexion reçues', [
-        'telephone' => $validated['telephone'],
-        'password_length' => strlen($validated['password']),
-        'password_empty' => empty($validated['password'])
-    ]);
+    return response()->json($result, $result['success'] ? 200 : 422);
+}
+    // ──────────────────────────────────────────
+    // Connexion Social (Google / Apple via Firebase)
+    // ──────────────────────────────────────────
+    public function socialLogin(Request $request): JsonResponse
+    {
+        $request->validate([
+            'firebase_token' => 'required|string',
+            'provider'       => 'required|in:google,apple',
+        ]);
 
-    try {
-        $result = $this->authService->connexion(
-            $validated['telephone'], 
-            $validated['password']
+        $result = $this->authService->socialLogin(
+            $request->firebase_token,
+            $request->provider
         );
 
-        if ($result['success']) {
-            Log::info('✓ Connexion réussie', [
-                'telephone' => $validated['telephone'],
-                'user_id' => $result['user']['id'] ?? 'N/A'
-            ]);
-        } else {
-            Log::warning('✗ Échec de connexion', [
-                'telephone' => $validated['telephone'],
-                'raison' => $result['message'] ?? 'Inconnue',
-                'details' => $result
-            ]);
+        $status = $result['success'] ? 200 : 422;
+        return response()->json($result, $status);
+    }
+
+    // ──────────────────────────────────────────
+    // Complétion du profil social
+    // ──────────────────────────────────────────
+    public function completerProfilSocial(Request $request): JsonResponse
+    {
+        $user = $request->user('api');
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Non authentifié'], 401);
         }
 
-        return response()->json($result, $result['success'] ? 200 : 401);
-
-    } catch (\Exception $e) {
-        Log::error('ERREUR lors de la connexion', [
-            'telephone' => $validated['telephone'],
-            'exception' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
+        $validated = $request->validate([
+            'nom'              => 'required|string|max:255',
+            'prenom'           => 'required|string|max:255',
+            'telephone'        => 'required|string|unique:auto_ecole_users,telephone,' . $user->id,
+            'type_permis'      => 'required|in:permis_a,permis_b,permis_t',
+            'centre_examen_id' => 'nullable|exists:centres_examen,id',
+            'code_parrainage'  => 'required|string',
+            'date_naissance'   => 'nullable|date',
         ]);
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Erreur serveur lors de la connexion'
-        ], 500);
+        $result = $this->authService->completerProfilSocial($user, $validated);
+        return response()->json($result, $result['success'] ? 200 : 422);
     }
-}
 
+    // ──────────────────────────────────────────
+    // Connexion classique
+    // ──────────────────────────────────────────
+    public function connexion(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+    'telephone' => 'required_without:email|nullable|string',
+    'email'     => 'required_without:telephone|nullable|email',
+    'password'  => 'required|string',
+]);
+
+        try {
+            // AuthController.php — méthode connexion()
+$result = $this->authService->connexion(
+    $validated['telephone'] ?? null,
+    $validated['email']     ?? null,
+    $validated['password']
+);
+            return response()->json($result, $result['success'] ? 200 : 401);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Erreur serveur'], 500);
+        }
+    }
+
+    // ──────────────────────────────────────────
+    // Méthodes existantes inchangées
+    // ──────────────────────────────────────────
     public function deconnexion(Request $request): JsonResponse
     {
-        $user = $request->user('api'); // Spécifie le guard
-        Log::info('Déconnexion user:', ['user' => $user]);
-
+        $user = $request->user('api');
         $result = $this->authService->deconnexion($user);
-
         return response()->json($result);
     }
 
     public function profil(Request $request): JsonResponse
     {
-        $user = $request->user('api'); // Spécifie le guard
-        Log::info('Profil user:', ['user' => $user]);
-
+        $user = $request->user('api');
         if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Utilisateur non authentifié'
-            ], 401);
+            return response()->json(['success' => false, 'message' => 'Non authentifié'], 401);
         }
-
-        $result = $this->authService->profil($user);
-
-        return response()->json($result);
+        return response()->json($this->authService->profil($user));
     }
 
     public function mettreAJourProfil(Request $request): JsonResponse
     {
-        $user = $request->user('api'); // Spécifie le guard
-
+        $user = $request->user('api');
         if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Utilisateur non authentifié'
-            ], 401);
+            return response()->json(['success' => false, 'message' => 'Non authentifié'], 401);
         }
 
         $validated = $request->validate([
-            'nom' => 'sometimes|string|max:255',
-            'prenom' => 'sometimes|string|max:255',
-            'telephone' => 'sometimes|string|unique:auto_ecole_users,telephone,' . $user->id,
-            'quartier' => 'nullable|string',
-            'type_cours' => 'sometimes|in:en_ligne,presentiel,les_deux',
-            'password' => 'nullable|string|min:6',
-            'lieux_pratique' => 'nullable|array',
-            'lieux_pratique.*' => 'exists:lieux_pratique,id'
+            'nom'           => 'sometimes|string|max:255',
+            'prenom'        => 'sometimes|string|max:255',
+            'telephone'     => 'sometimes|string|unique:auto_ecole_users,telephone,' . $user->id,
+            'quartier'      => 'nullable|string',
+            'type_cours'    => 'sometimes|in:en_ligne,presentiel,les_deux',
+            'password'      => 'nullable|string|min:6',
+            'lieux_pratique'   => 'nullable|array',
+            'lieux_pratique.*' => 'exists:lieux_pratique,id',
         ]);
 
-        $result = $this->authService->mettreAJourProfil($user, $validated);
-
-        return response()->json($result);
+        return response()->json($this->authService->mettreAJourProfil($user, $validated));
     }
 
     public function codeParrainageDefaut(): JsonResponse
     {
-        $result = $this->authService->getCodeParrainageDefaut();
-
-        return response()->json($result);
+        return response()->json($this->authService->getCodeParrainageDefaut());
     }
 
     public function configuration(): JsonResponse
     {
-        $result = $this->dashboardService->getConfiguration();
-
-        return response()->json($result);
+        return response()->json($this->dashboardService->getConfiguration());
     }
 }

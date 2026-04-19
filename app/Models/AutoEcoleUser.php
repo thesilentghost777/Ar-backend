@@ -40,6 +40,15 @@ class AutoEcoleUser extends Authenticatable
         'description_paiement_examen_blanc',
         'description_paiement_examen',
         'premier_depot_at',
+        'auth_provider',
+        'firebase_uid',
+        'email',
+        'email_verified',
+        'email_verified_at',
+        'telephone_verified',
+        'telephone_verified_at',
+        'profil_complet',
+
     ];
 
     protected $hidden = [
@@ -56,7 +65,23 @@ class AutoEcoleUser extends Authenticatable
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
+        'email_verified'          => 'boolean',
+        'email_verified_at'       => 'datetime',
+        'telephone_verified'      => 'boolean',
+        'telephone_verified_at'   => 'datetime',
+        'profil_complet'          => 'boolean',
     ];
+
+
+    public function estVerifie(): bool
+{
+    return match($this->auth_provider) {
+        'google', 'apple' => true,
+        'email'           => $this->email_verified,
+        'telephone'       => $this->telephone_verified,
+        default           => false,
+    };
+}
 
     // Relations
     public function session()

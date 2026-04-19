@@ -35,4 +35,16 @@ return [
         ],
     ],
 
+    // Dans config/services.php, ajoutez :
+    'twilio' => [
+        'sid'        => env('TWILIO_SID'),
+        'auth_token' => env('TWILIO_AUTH_TOKEN'),
+        'verify_sid' => env('TWILIO_VERIFY_SID'),
+    ],
+
+    'firebase' => [
+        'credentials' => env('FIREBASE_CREDENTIALS'),
+        'project_id'  => env('FIREBASE_PROJECT_ID'),
+    ],
+
 ];

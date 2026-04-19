@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inscription — Ange Raphaël Auto École</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+
+  .logo-wrap {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .logo-circle {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f9a825, #f57f17);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    margin: 0 auto 10px;
+    box-shadow: 0 4px 24px rgba(249,168,37,0.35);
+  }
+  .logo-wrap h1 {
+    color: #fff;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .logo-wrap p {
+    color: rgba(255,255,255,0.65);
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 32px 28px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  }
+
+  .card h2 {
+    font-size: 19px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 4px;
+  }
+  .card .subtitle {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 24px;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .form-group input, .form-group select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 15px;
+    color: #1a1a2e;
+    background: #fafafa;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .form-group input:focus, .form-group select:focus {
+    border-color: #f9a825;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(249,168,37,0.15);
+  }
+  .form-group input.readonly {
+    background: #f0f9ff;
+    border-color: #b3e0ff;
+    color: #0072b5;
+    font-weight: 600;
+  }
+  .form-group input.error {
+    border-color: #e53935;
+  }
+  .form-group .hint {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 4px;
+  }
+  .form-group .hint.code-hint {
+    color: #0072b5;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .form-group .hint.code-hint::before {
+    content: "✓";
+    color: #00a86b;
+    font-weight: 700;
+  }
+
+  .row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid #f0f0f0;
+    margin: 20px 0;
+  }
+
+  .btn-submit {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #f9a825, #f57f17);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+    transition: opacity 0.2s, transform 0.1s;
+    box-shadow: 0 4px 16px rgba(249,168,37,0.4);
+  }
+  .btn-submit:hover { opacity: 0.93; }
+  .btn-submit:active { transform: scale(0.98); }
+  .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .spinner {
+    display: inline-block;
+    width: 18px; height: 18px;
+    border: 2.5px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .toast {
+    display: none;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 18px;
+    line-height: 1.4;
+  }
+  .toast.error { background: #ffeaea; color: #c62828; border: 1px solid #f5c6c6; display: block; }
+  .toast.success { background: #e8f5e9; color: #1b5e20; border: 1px solid #b9dfb9; display: block; }
+
+  .success-screen {
+    display: none;
+    text-align: center;
+    padding: 10px 0;
+  }
+  .success-icon {
+    width: 80px; height: 80px;
+    background: linear-gradient(135deg, #00c853, #00897b);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px;
+    margin: 0 auto 20px;
+    box-shadow: 0 4px 24px rgba(0,200,83,0.35);
+  }
+  .success-screen h3 {
+    font-size: 21px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 8px;
+  }
+  .success-screen p {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+
+  .store-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .btn-store {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    font-family: inherit;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn-store:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+  .btn-store:active { transform: scale(0.98); }
+  .btn-store.playstore {
+    background: #1a1a2e;
+    color: #fff;
+  }
+  .btn-store.appstore {
+    background: #f5f5f5;
+    color: #555;
+    border: 1.5px solid #ddd;
+    cursor: not-allowed;
+    opacity: 0.65;
+  }
+  .btn-store .store-icon {
+    font-size: 28px;
+    line-height: 1;
+  }
+  .btn-store .store-text {
+    text-align: left;
+  }
+  .btn-store .store-text small {
+    display: block;
+    font-size: 10px;
+    opacity: 0.75;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+  }
+  .btn-store .store-text strong {
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .field-error {
+    font-size: 11px;
+    color: #e53935;
+    margin-top: 4px;
+  }
+
+  .pass-wrap { position: relative; }
+  .pass-wrap input { padding-right: 44px; }
+  .toggle-pass {
+    position: absolute; right: 12px; top: 50%;
+    transform: translateY(-50%);
+    background: none; border: none; cursor: pointer;
+    font-size: 18px; color: #aaa; padding: 0;
+    line-height: 1;
+  }
+
+  @media (max-width: 480px) {
+    .card { padding: 24px 18px; }
+    .row-2 { grid-template-columns: 1fr; gap: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="logo-wrap">
+  <div class="logo-circle">🚗</div>
+  <h1>Ange Raphaël</h1>
+  <p>Auto École — Inscription</p>
+</div>
+
+<div class="card">
+
+  <div id="formView">
+    <h2>Créer votre compte</h2>
+    <p class="subtitle">Rejoignez notre réseau de conducteurs en formation</p>
+
+    <div id="toast" class="toast"></div>
+
+    <div class="row-2">
+      <div class="form-group">
+        <label>Nom</label>
+        <input type="text" id="nom" placeholder="Dupont" autocomplete="family-name">
+        <div class="field-error" id="err-nom"></div>
+      </div>
+      <div class="form-group">
+        <label>Prénom</label>
+        <input type="text" id="prenom" placeholder="Jean" autocomplete="given-name">
+        <div class="field-error" id="err-prenom"></div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Téléphone</label>
+      <input type="tel" id="telephone" placeholder="6XXXXXXXX" autocomplete="tel">
+      <div class="field-error" id="err-telephone"></div>
+    </div>
+
+    <div class="form-group">
+      <label>Date de naissance</label>
+      <input type="date" id="date_naissance">
+    </div>
+
+    <div class="form-group">
+      <label>Type de permis</label>
+      <select id="type_permis">
+        <option value="permis_b" selected>Permis B — Voiture</option>
+        <option value="permis_a">Permis A — Moto</option>
+      </select>
+    </div>
+
+    <hr class="divider">
+
+    <div class="form-group">
+      <label>Mot de passe</label>
+      <div class="pass-wrap">
+        <input type="password" id="password" placeholder="Minimum 6 caractères" autocomplete="new-password">
+        <button type="button" class="toggle-pass" onclick="togglePass('password', this)">👁</button>
+      </div>
+      <div class="field-error" id="err-password"></div>
+    </div>
+
+    <div class="form-group">
+      <label>Confirmer le mot de passe</label>
+      <div class="pass-wrap">
+        <input type="password" id="password_confirmation" placeholder="Répétez le mot de passe" autocomplete="new-password">
+        <button type="button" class="toggle-pass" onclick="togglePass('password_confirmation', this)">👁</button>
+      </div>
+      <div class="field-error" id="err-password_confirmation"></div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="form-group">
+      <label>Code de parrainage</label>
+      <input type="text" id="code_parrainage" placeholder="Code obligatoire" class="readonly" readonly>
+      <div class="hint code-hint" id="code-hint" style="display:none;">Code pré-rempli depuis votre lien d'invitation</div>
+      <div class="field-error" id="err-code_parrainage"></div>
+    </div>
+
+    <button class="btn-submit" id="btnSubmit" onclick="submit()">S'inscrire</button>
+  </div>
+
+  <div class="success-screen" id="successView">
+    <div class="success-icon">✓</div>
+    <h3>Inscription réussie !</h3>
+    <p id="successMsg">Votre compte a été créé avec succès.<br>Téléchargez l'application pour continuer votre formation.</p>
+
+    <div class="store-buttons">
+      <a href="https://play.google.com/store/apps/details?id=com.anonymous.angeraphael" target="_blank" class="btn-store playstore">
+        <span class="store-text">
+          <small>Disponible sur</small>
+          <strong>Google Play</strong>
+        </span>
+      </a>
+      <button class="btn-store appstore" disabled>
+        <span class="store-text">
+          <small>Bientôt disponible</small>
+          <strong>App Store</strong>
+        </span>
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API_BASE = 'https://ange-raphael.supahuman.site/api';
+
+function getParam(name) {
+  const url = new URL(window.location.href);
+  return url.searchParams.get(name);
+}
+
+function togglePass(id, btn) {
+  const inp = document.getElementById(id);
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    inp.type = 'password';
+    btn.textContent = '👁';
+  }
+}
+
+function clearErrors() {
+  ['nom','prenom','telephone','password','password_confirmation','code_parrainage'].forEach(f => {
+    const el = document.getElementById('err-' + f);
+    if (el) el.textContent = '';
+    const inp = document.getElementById(f);
+    if (inp) inp.classList.remove('error');
+  });
+  const toast = document.getElementById('toast');
+  toast.className = 'toast';
+  toast.textContent = '';
+}
+
+function showToast(msg, type) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.className = 'toast ' + type;
+  toast.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function showFieldErrors(errors) {
+  Object.entries(errors).forEach(([field, msgs]) => {
+    const el = document.getElementById('err-' + field);
+    const inp = document.getElementById(field);
+    if (el) el.textContent = Array.isArray(msgs) ? msgs[0] : msgs;
+    if (inp) inp.classList.add('error');
+  });
+}
+
+function setLoading(on) {
+  const btn = document.getElementById('btnSubmit');
+  if (on) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Inscription en cours…';
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = "S'inscrire";
+  }
+}
+
+async function submit() {
+  clearErrors();
+
+  const nom = document.getElementById('nom').value.trim();
+  const prenom = document.getElementById('prenom').value.trim();
+  const telephone = document.getElementById('telephone').value.trim();
+  const date_naissance = document.getElementById('date_naissance').value;
+  const type_permis = document.getElementById('type_permis').value;
+  const password = document.getElementById('password').value;
+  const password_confirmation = document.getElementById('password_confirmation').value;
+  const code_parrainage = document.getElementById('code_parrainage').value.trim();
+
+  let hasError = false;
+  if (!nom) { document.getElementById('err-nom').textContent = 'Le nom est obligatoire.'; document.getElementById('nom').classList.add('error'); hasError = true; }
+  if (!prenom) { document.getElementById('err-prenom').textContent = 'Le prénom est obligatoire.'; document.getElementById('prenom').classList.add('error'); hasError = true; }
+  if (!telephone) { document.getElementById('err-telephone').textContent = 'Le téléphone est obligatoire.'; document.getElementById('telephone').classList.add('error'); hasError = true; }
+  if (!password) { document.getElementById('err-password').textContent = 'Le mot de passe est obligatoire.'; document.getElementById('password').classList.add('error'); hasError = true; }
+  else if (password.length < 6) { document.getElementById('err-password').textContent = 'Minimum 6 caractères.'; document.getElementById('password').classList.add('error'); hasError = true; }
+  if (password !== password_confirmation) { document.getElementById('err-password_confirmation').textContent = 'Les mots de passe ne correspondent pas.'; document.getElementById('password_confirmation').classList.add('error'); hasError = true; }
+  if (!code_parrainage) { document.getElementById('err-code_parrainage').textContent = 'Code de parrainage obligatoire.'; document.getElementById('code_parrainage').classList.add('error'); hasError = true; }
+  if (hasError) return;
+
+  setLoading(true);
+
+  const body = { nom, prenom, telephone, password, password_confirmation, type_permis, code_parrainage };
+  if (date_naissance) body.date_naissance = date_naissance;
+
+  try {
+    const res = await fetch(API_BASE + '/inscription', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      document.getElementById('formView').style.display = 'none';
+      const sv = document.getElementById('successView');
+      sv.style.display = 'block';
+      if (data.user) {
+        document.getElementById('successMsg').innerHTML =
+          `Bienvenue <strong>${data.user.prenom || prenom} ${data.user.nom || nom}</strong> !<br>` +
+          `Votre code de parrainage : <strong>${data.code_parrainage || ''}</strong><br><br>` +
+          `Téléchargez l'application pour continuer votre formation.`;
+      }
+    } else {
+      if (data.errors) {
+        showFieldErrors(data.errors);
+        showToast(data.message || 'Veuillez corriger les erreurs ci-dessous.', 'error');
+      } else {
+        showToast(data.message || 'Une erreur est survenue. Réessayez.', 'error');
+      }
+    }
+  } catch (e) {
+    showToast('Erreur réseau. Vérifiez votre connexion et réessayez.', 'error');
+  } finally {
+    setLoading(false);
+  }
+}
+
+(function init() {
+  const code = getParam('code') || getParam('code_parrainage') || getParam('ref');
+  const inp = document.getElementById('code_parrainage');
+  const hint = document.getElementById('code-hint');
+  if (code) {
+    inp.value = code.toUpperCase();
+    hint.style.display = 'flex';
+  }
+  inp.addEventListener('input', function() {
+    this.value = this.value.toUpperCase();
+  });
+})();
+</script>
+</body>
+</html>
