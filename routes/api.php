@@ -55,10 +55,12 @@ Route::get('/end_payment', [PaiementController::class, 'endPayment']);
 // Routes protégées
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/deconnexion',            [AuthController::class, 'deconnexion']);
-        Route::get('/profil',                  [AuthController::class, 'profil']);
-        Route::put('/profil',                  [AuthController::class, 'mettreAJourProfil']);
-        Route::post('/profil/completer',       [AuthController::class, 'completerProfilSocial']); // NOUVEAU
-        Route::get('/dashboard', [DashboardController::class, 'index']);
+    Route::get('/profil',                  [AuthController::class, 'profil']);
+    Route::put('/profil',                  [AuthController::class, 'mettreAJourProfil']);
+    Route::post('/profil/completer',       [AuthController::class, 'completerProfilSocial']);
+    Route::get('/dashboard', [DashboardController::class, 'index']);
+    Route::delete('/compte/supprimer', [AuthController::class, 'supprimerCompte']);
+
 
 
     // Statut CNI de l'utilisateur
@@ -148,7 +150,6 @@ Route::get('/cours/progression', [CoursController::class, 'getProgression']);
     Route::get('/parrainage/arbre', [ParrainageController::class, 'getArbre']);
 
 
-    Route::delete('/compte/supprimer', [AuthController::class, 'supprimerCompte']);
     
 });
 
