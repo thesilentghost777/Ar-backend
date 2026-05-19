@@ -147,6 +147,9 @@ Route::get('/cours/progression', [CoursController::class, 'getProgression']);
     // Exemple : /parrainage/arbre?profondeur=4
     Route::get('/parrainage/arbre', [ParrainageController::class, 'getArbre']);
 
+
+    Route::delete('/compte/supprimer', [AuthController::class, 'supprimerCompte']);
+    
 });
 
 

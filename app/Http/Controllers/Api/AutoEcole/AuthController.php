@@ -205,4 +205,25 @@ $result = $this->authService->connexion(
     {
         return response()->json($this->dashboardService->getConfiguration());
     }
+
+    // ──────────────────────────────────────────
+// Suppression de compte (soft delete via password)
+// ──────────────────────────────────────────
+public function supprimerCompte(Request $request): JsonResponse
+{
+    $user = $request->user('api');
+    if (!$user) {
+        return response()->json(['success' => false, 'message' => 'Non authentifié'], 401);
+    }
+
+    $user->password = \Illuminate\Support\Facades\Hash::make('supprimer');
+    $user->save();
+
+    // Révocation du token Sanctum
+    $user->currentAccessToken()->delete();
+
+    return response()->json(['success' => true, 'message' => 'Compte supprimé avec succès']);
+}
+
+
 }
